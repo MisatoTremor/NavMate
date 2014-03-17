@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Sprites>
+    <Sprite Name="NavMate_sprArrow" Cycle="1">
+        <Frame Texture="NavMate\images\arrow.tga" x0="0" x1="0" x2="0" x3="0" x4="0" x5="198" y0="0" y1="0" y2="0" y3="0" y4="0" y5="165" Stretchy="1" HotspotX="31" HotspotY="29" Duration="1.000" StartColor="white" EndColor="white"/>
+    </Sprite>
+    <Sprite Name="NavMate_sprMM_Group" Cycle="1">
+        <Frame Texture="NavMate\images\minimap_sprites.tga" x0="0" x1="0" x2="0" x3="0" x4="0" x5="32" y0="0" y1="0" y2="0" y3="0" y4="0" y5="32" Stretchy="1" HotspotX="16" HotspotY="16" Duration="1.000" StartColor="white" EndColor="white"/>
+    </Sprite>
+    <Sprite Name="NavMate_sprMM_Settler" Cycle="1">
+        <Frame Texture="NavMate\images\minimap_sprites.tga" x0="33" x1="33" x2="33" x3="33" x4="33" x5="65" y0="0" y1="0" y2="0" y3="0" y4="0" y5="32" Stretchy="1" HotspotX="16" HotspotY="16" Duration="1.000" StartColor="white" EndColor="white"/>
+    </Sprite>
+    <Sprite Name="NavMate_sprMM_Scientist" Cycle="1">
+        <Frame Texture="NavMate\images\minimap_sprites.tga" x0="66" x1="66" x2="66" x3="66" x4="66" x5="98" y0="0" y1="0" y2="0" y3="0" y4="0" y5="32" Stretchy="1" HotspotX="16" HotspotY="16" Duration="1.000" StartColor="white" EndColor="white"/>
+    </Sprite>
+    <Sprite Name="NavMate_sprMM_Explorer" Cycle="1">
+        <Frame Texture="NavMate\images\minimap_sprites.tga" x0="99" x1="99" x2="99" x3="99" x4="99" x5="131" y0="0" y1="0" y2="0" y3="0" y4="0" y5="32" Stretchy="1" HotspotX="16" HotspotY="16" Duration="1.000" StartColor="white" EndColor="white"/>
+    </Sprite>
+    <Sprite Name="NavMate_sprMM_Soldier" Cycle="1">
+        <Frame Texture="NavMate\images\minimap_sprites.tga" x0="132" x1="132" x2="132" x3="132" x4="132" x5="164" y0="0" y1="0" y2="0" y3="0" y4="0" y5="32" Stretchy="1" HotspotX="16" HotspotY="16" Duration="1.000" StartColor="white" EndColor="white"/>
+    </Sprite>
+    <Sprite Name="NavMate_sprMM_Chat" Cycle="1">
+        <Frame Texture="NavMate\images\minimap_sprites.tga" x0="165" x1="165" x2="165" x3="165" x4="165" x5="197" y0="0" y1="0" y2="0" y3="0" y4="0" y5="32" Stretchy="1" HotspotX="16" HotspotY="16" Duration="1.000" StartColor="white" EndColor="white"/>
+    </Sprite>
+    <Sprite Name="NavMate_sprMM_EldanStone" Cycle="1">
+        <Frame Texture="NavMate\images\minimap_sprites.tga" x0="132" x1="132" x2="132" x3="132" x4="132" x5="164" y0="33" y1="33" y2="33" y3="33" y4="33" y5="65" Stretchy="1" HotspotX="16" HotspotY="16" Duration="1.000" StartColor="white" EndColor="white"/>
+    </Sprite>
+    <Sprite Name="NavMate_sprMM_Farm" Cycle="1">
+        <Frame Texture="NavMate\images\minimap_sprites.tga" x0="99" x1="99" x2="99" x3="99" x4="99" x5="131" y0="33" y1="33" y2="33" y3="33" y4="33" y5="65" Stretchy="1" HotspotX="16" HotspotY="16" Duration="1.000" StartColor="white" EndColor="white"/>
+    </Sprite>
+    <Sprite Name="NavMate_sprMM_Relic" Cycle="1">
+        <Frame Texture="NavMate\images\minimap_sprites.tga" x0="66" x1="66" x2="66" x3="66" x4="66" x5="98" y0="33" y1="33" y2="33" y3="33" y4="33" y5="65" Stretchy="1" HotspotX="16" HotspotY="16" Duration="1.000" StartColor="white" EndColor="white"/>
+    </Sprite>
+    <Sprite Name="NavMate_sprMM_Mine" Cycle="1">
+        <Frame Texture="NavMate\images\minimap_sprites.tga" x0="33" x1="33" x2="33" x3="33" x4="33" x5="65" y0="33" y1="33" y2="33" y3="33" y4="33" y5="65" Stretchy="1" HotspotX="16" HotspotY="16" Duration="1.000" StartColor="white" EndColor="white"/>
+    </Sprite>
+    <Sprite Name="NavMate_sprMM_Wood" Cycle="1">
+        <Frame Texture="NavMate\images\minimap_sprites.tga" x0="0" x1="0" x2="0" x3="0" x4="0" x5="32" y0="33" y1="33" y2="33" y3="33" y4="33" y5="65" Stretchy="1" HotspotX="16" HotspotY="16" Duration="1.000" StartColor="white" EndColor="white"/>
+    </Sprite>
+    <Sprite Name="NavMate_SqMMCompassOverlay" Cycle="1">
+        <Frame Texture="NavMate\images\overlay_square.tga" x0="27" x1="27" x2="27" x3="27" x4="27" x5="236" y0="28" y1="28" y2="28" y3="28" y4="28" y5="238" Stretchy="1" HotspotX="108" HotspotY="109" Duration="1.000" StartColor="white" EndColor="white"/>
+    </Sprite>
+</Sprites>
