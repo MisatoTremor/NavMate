@@ -234,6 +234,9 @@ function NavMate:LoadSprites()
   if not Apollo.IsSpriteLoaded("NavMate_Square_MiniMapCompassOverlay") then
     Apollo.LoadSprites(self.AssetFolder .. "\\NavMate_Sprites.xml")
   end
+	if not Apollo.IsSpriteLoaded("ColorPickerSprites:dgcpHueMap") then 
+		Apollo.LoadSprites(self.AssetFolder .. "\\ColorPickerSprites.xml", "ColorPickerSprites")
+	end
 end
 
 function NavMate:OnUnitCreated(unit)
