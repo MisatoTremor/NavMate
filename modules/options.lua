@@ -272,23 +272,23 @@ local function ShowPerNodeCustomization(strNodeType)
 
   local tWndDef = {
     Name                 = "PerNodeCustomization",
-    AnchorCenter         = {360, 400},
-    Template             = "CRB_TooltipSimple",
+    AnchorCenter         = {408, 448},
+		Sprite 							 = "BK3:UI_BK3_Holo_Framing_2",
+		BGColor 						 = "ffffffff",
     Escapable            = true,
     NoClip               = true,
     Overlapped           = true,
-    UseTemplateBG        = true,
-    Border               = true,
     Picture              = true,
     NewWindowDepth       = true,
     Moveable             = true,
     Children = {
       {
         Name           = "NodeContainer",
-        AnchorPoints   = {0,0,1,1}, AnchorOffsets  = {6,6,-6,-46},
-        Template       = "CRB_NormalFramedThin",
-        UseTemplateBG  = true,
-        Border         = true,
+        AnchorPoints   = {0,0,1,1}, AnchorOffsets  = {46,46,-46,-86},
+				Template 			 = "Holo_List",
+				Sprite 				 = "BK3:UI_BK3_Holo_InsetSimple",
+				Border = false,
+				UseTemplateBG = false,
         Children       = {},
         VScroll        = true,
         IgnoreMouse    = true,
@@ -305,7 +305,10 @@ local function ShowPerNodeCustomization(strNodeType)
       
       { -- ResetButton
         WidgetType = "PushButton",
-        AnchorPoints = {0,1,1,1}, AnchorOffsets = {16,-50, -16, -16},
+        AnchorPoints = {0,1,1,1}, AnchorOffsets = {36,-91, -36, -31},
+				Base = "BK3:btnHolo_Blue_Med",
+				Font = "CRB_InterfaceMedium",
+				TextTheme = "UI_BtnTextBlue",
         Text = L["Reset to Defaults"],
         Events = {
           ButtonSignal = function(_, wndHandler, wndControl)
@@ -315,10 +318,10 @@ local function ShowPerNodeCustomization(strNodeType)
               N.db.modules.map[strNodeType].perNode[k].show = true
               rowWnd:FindChild("ShowCheckBox"):SetCheck(N.db.modules.map[strNodeType].perNode[k].show)
               N.db.modules.map[strNodeType].perNode[k].sprIcon = N.db.modules.map[strNodeType].sprIcon
-              rowWnd:FindChild("IconFrame:SampleBorder:Sample"):SetSprite(N.db.modules.map[strNodeType].perNode[k].sprIcon)
+              rowWnd:FindChild("IconFrame:IconSample"):SetSprite(N.db.modules.map[strNodeType].perNode[k].sprIcon)
 							local cr = N.db.modules.map[strNodeType].color
               N.db.modules.map[strNodeType].perNode[k].color   = CColor.new(cr.r, cr.g, cr.b, cr.a)
-              rowWnd:FindChild("ColorFrame:SampleBorder:Sample"):SetBGColor(N.db.modules.map[strNodeType].perNode[k].color)
+              rowWnd:FindChild("ColorFrame:ColorSample"):SetBGColor(N.db.modules.map[strNodeType].perNode[k].color)
             end
             N:UpdateResourceNodes(true)
           end
@@ -329,9 +332,9 @@ local function ShowPerNodeCustomization(strNodeType)
         Name = "CloseButton",
         Class = "Button",
         ButtonType = "PushButton",
-        Base = "CRB_Basekit:kitBtn_Close", 
+        Base = "BK3:btnHolo_Close", 
         WindowSoundTemplate = "CloseWindowPhys",
-        AnchorPoints = "TOPRIGHT", AnchorOffsets = { -6, -18, 21, 11 },
+        AnchorPoints = "TOPRIGHT", AnchorOffsets = { -55, 30, -33, 52 },
         NoClip = true,
         Events = {
           ButtonSignal = function(_, wndHandler, wndControl) wndControl:GetParent():Close() end,
@@ -371,32 +374,53 @@ local function ShowPerNodeCustomization(strNodeType)
           AnchorPoints  = { 0,0,0,1 }, AnchorOffsets = { 210,0,250,0 },
           
           Children = {
-            {
-              Name          = "SampleBorder",
-              Sprite        = "CRB_Basekit:kitBase_HoloBlue_SmallPlain",
-              AnchorOffsets = {0,0,37,36},
-              Children = {
-                {
-                  Name        = "Sample",
-                  AnchorFill  = 3,
-                  Sprite      = "ClientSprites:WhiteFill",
-                  Events = {
-                    MouseButtonDown = function(_, wndHandler, wndControl)
-                      if wndHandler ~= wndControl then return end
-                      CreateIconPicker(wndControl:GetParent(), ktNodeIcons, 32, N.db.modules.map[strNodeType].perNode[k].sprIcon, function(strIcon)
-                        N.db.modules.map[strNodeType].perNode[k].sprIcon = strIcon
-                        wndControl:SetSprite(strIcon)
-                        N:UpdateResourceNodes(true)
-                      end)
-                    end,
-                    WindowLoad = function(_, wndHandler, wndControl)
-                      if wndHandler ~= wndControl then return end
-                      wndControl:SetSprite(N.db.modules.map[strNodeType].perNode[k].sprIcon)
-                    end,
-                  },
-                },
-              },
-            },
+						{
+							AnchorOffsets = { 3, 5, 27, 29 },
+							RelativeToClient = true, 
+							BGColor = "ffffffff", 
+							TextColor = "UI_WindowTextDefault", 
+							Name = "IconSample", 
+							Sprite = "BasicSprites:WhiteFill", 
+							Picture = true, 
+							IgnoreMouse = true, 
+							Events = {
+								WindowLoad = function(_, wndHandler, wndControl)
+									if wndHandler ~= wndControl then return end
+									wndControl:SetSprite(N.db.modules.map[strNodeType].perNode[k].sprIcon)
+								end,
+							},
+
+							Children = {
+								{
+									AnchorOffsets = { -10, -10, 10, 10 },
+									AnchorPoints = "FILL",
+									Class = "Button", 
+									Base = "CRB_CraftingCircuitSprites:btnCircuit_SquareGlass_Blue", 
+									Font = "DefaultButton", 
+									ButtonType = "PushButton", 
+									DT_VCENTER = true, 
+									DT_CENTER = true, 
+									BGColor = "UI_BtnBGDefault", 
+									TextColor = "UI_BtnTextDefault", 
+									NormalTextColor = "UI_BtnTextDefault", 
+									PressedTextColor = "UI_BtnTextDefault", 
+									FlybyTextColor = "UI_BtnTextDefault", 
+									PressedFlybyTextColor = "UI_BtnTextDefault", 
+									DisabledTextColor = "UI_BtnTextDefault", 
+									Name = "IconPickerBtn", 
+									NoClip = true, 
+									Events = {
+										ButtonSignal = function(self, wndHandler, wndControl)
+											CreateIconPicker(wndControl:GetParent(), ktNodeIcons, 32, N.db.modules.map[strNodeType].perNode[k].sprIcon, function(strIcon)
+												N.db.modules.map[strNodeType].perNode[k].sprIcon = strIcon
+												wndControl:GetParent():SetSprite(strIcon)
+												N:UpdateResourceNodes(true)
+											end)
+										end,
+									},
+								},
+							},
+						},
           },
         },
       
@@ -406,34 +430,55 @@ local function ShowPerNodeCustomization(strNodeType)
           AnchorPoints  = { 0,0,0,1 }, AnchorOffsets = { 255,0,295,0 },
           
           Children = {
-            {
-              Name          = "SampleBorder",
-              Sprite        = "CRB_Basekit:kitBase_HoloBlue_SmallPlain",
-              AnchorOffsets = {0,0,37,36},
-              IgnoreMouse   = true,
-              Children = {
-                {
-                  Name        = "Sample",
-                  AnchorFill  = 8,
-                  Sprite      = "ClientSprites:WhiteFill",
-                  Events = {
-                    MouseButtonDown = function(_, wndHandler, wndControl)
-                      if wndHandler ~= wndControl then return end
-                      if ColorPicker then 
-                        ColorPicker.AdjustCColor(N.db.modules.map[strNodeType].perNode[k].color, false, function()
-                            wndControl:SetBGColor(N.db.modules.map[strNodeType].perNode[k].color)
-                            N:UpdateResourceNodes()
-                        end) 
-                      end
-                    end,
-                    WindowLoad = function(_, wndHandler, wndControl)
-                      if wndHandler ~= wndControl then return end
-                      wndControl:SetBGColor(N.db.modules.map[strNodeType].perNode[k].color)
-                    end,
-                  },
-                },
-              },
-            },
+						{
+							AnchorOffsets = { 3, 5, 27, 29 },
+							RelativeToClient = true, 
+							BGColor = "xkcdLavender", 
+							TextColor = "UI_WindowTextDefault", 
+							Name = "ColorSample", 
+							Sprite = "BasicSprites:WhiteFill", 
+							Picture = true, 
+							IgnoreMouse = true, 
+							Events = {
+								WindowLoad = function(_, wndHandler, wndControl)
+									if wndHandler ~= wndControl then 
+										return
+									end
+									wndControl:SetBGColor(N.db.modules.map[strNodeType].perNode[k].color)
+								end,
+							},
+
+							Children = {
+								{
+									AnchorOffsets = { -10, -10, 10, 10 },
+									AnchorPoints = "FILL",
+									Class = "Button", 
+									Base = "CRB_CraftingCircuitSprites:btnCircuit_SquareGlass_Blue", 
+									Font = "DefaultButton", 
+									ButtonType = "PushButton", 
+									DT_VCENTER = true, 
+									DT_CENTER = true, 
+									BGColor = "UI_BtnBGDefault", 
+									TextColor = "UI_BtnTextDefault", 
+									NormalTextColor = "UI_BtnTextDefault", 
+									PressedTextColor = "UI_BtnTextDefault", 
+									FlybyTextColor = "UI_BtnTextDefault", 
+									PressedFlybyTextColor = "UI_BtnTextDefault", 
+									DisabledTextColor = "UI_BtnTextDefault", 
+									Name = "ColorPickerBtn", 
+									NoClip = true, 
+									Events = {
+										ButtonSignal = function(self, wndHandler, wndControl)
+											N.DaiColorPicker.AdjustColor(N.db.modules.map[strNodeType].perNode[k].color, function(newColor, bIsFinal) 
+												N.db.modules.map[strNodeType].perNode[k].color = newColor
+												wndControl:GetParent():SetBGColor(newColor)
+												N:UpdateResourceNodes()
+											end)
+										end,
+									},
+								},
+							},
+						},
           },
         },
       },
@@ -452,13 +497,13 @@ DaiGUI:RegisterWidgetType("NavMateCheckBox", function()
     Class            = "Button",
     Name             = "NavMateCheckBox",
     RelativeToClient = true,
-    Font             = "CRB_InterfaceSmall",
+    Font             = "CRB_InterfaceMedium",
     ButtonType       = "Check",
-    TextColor        = "UI_TextHoloBodyHighlight",
+    TextColor        = "UI_WindowTextDefault",
     DrawAsCheckbox   = true,
     DT_VCENTER       = true,
     TextThemeColor   = "ffffffff",
-    Base             = "HologramSprites:HoloCheckBoxBtn",
+    Base             = "BK3:btnHolo_Check",
   }
   return ctrl
 end, 1)
@@ -469,13 +514,13 @@ DaiGUI:RegisterWidgetType("NavMateRadioButton", function()
     Class            = "Button",
     Name             = "NavMateRadioButton",
     RelativeToClient = true,
-    Font             = "CRB_InterfaceSmall",
+    Font             = "CRB_InterfaceMedium",
     ButtonType       = "Check",
-    TextColor        = "UI_TextHoloBodyHighlight",
+    TextColor        = "UI_WindowTextDefault",
     DrawAsCheckbox   = true,
     DT_VCENTER       = true,
     TextThemeColor   = "ffffffff",
-    Base             = "CRB_Basekit:kitBtn_Holo_RadioRound",
+    Base             = "BK3:btnHolo_Radio_Small",
   }
   return ctrl
 end, 1)
@@ -594,7 +639,7 @@ local function CreateGeneralTab()
               { -- ClockEnableBtn
                 WidgetType    = "NavMateCheckBox",
                 Name          = "ClockEnableBtn",
-                Text          = L["Enable"],
+                Text          = "  " .. L["Enable"],
                 AnchorPoints  = {0,0,0.5,0}, AnchorOffsets = {0,0,0,30},
                 Events = {
                   ButtonCheck = function(_, wndHandler, wndControl)
@@ -611,7 +656,7 @@ local function CreateGeneralTab()
               { -- Clock24HourBtn
                 WidgetType    = "NavMateCheckBox",
                 Name          = "Clock24HourBtn",
-                Text          = L["Options_24HourClock"],
+                Text          = "  " .. L["Options_24HourClock"],
                 AnchorPoints  = {0,0,0.5,0}, AnchorOffsets = {0,0,0,30},
                 Events = {
                   ButtonCheck = function(_, wndHandler, wndControl)
@@ -632,8 +677,8 @@ local function CreateGeneralTab()
                     AnchorPoints = {0,0,0.33,1}, AnchorOffsets = {5,0,1,0},
                     DT_VCENTER = true,
                     Text = L["Display Time"],
-                    Font             = "CRB_InterfaceSmall",
-                    TextColor        = "UI_TextHoloBodyHighlight",
+                    Font             = "CRB_InterfaceMedium",
+                    TextColor        = "UI_WindowTextDefault",
                   },
                 },
                 Children = {
@@ -641,7 +686,7 @@ local function CreateGeneralTab()
                     WidgetType    = "NavMateRadioButton",
                     Name          = "ClockLocalTimeBtn",
                     RadioGroup    = "ClockLocalServer",
-                    Text          = L["Local"],
+                    Text          = "  " .. L["Local"],
                     AnchorPoints  = {0.33,0,0.66,1}, AnchorOffsets = {0,0,0,0},
                     Events = {
                       ButtonCheck   = OnClockLocalServerChanged,
@@ -652,7 +697,7 @@ local function CreateGeneralTab()
                     WidgetType    = "NavMateRadioButton",
                     Name          = "ClockServerTimeBtn",
                     RadioGroup    = "ClockLocalServer",
-                    Text          = L["Server"],
+                    Text          = "  " .. L["Server"],
                     AnchorPoints  = {0.66,0,1,1}, AnchorOffsets = {0,0,0,0},
                     Events = {
                       ButtonCheck   = OnClockLocalServerChanged,
@@ -673,7 +718,7 @@ local function CreateGeneralTab()
               FillerCell, 
               { -- ClockAnchorToMiniMapBtn
                 WidgetType    = "NavMateCheckBox",
-                Text          = L["Dock to MiniMap"],
+                Text          = "  " .. L["Dock to MiniMap"],
                 AnchorPoints  = {0,0,0.5,0}, AnchorOffsets = {0,0,0,30},
                 Events = {
                   ButtonCheck = function(_, wndHandler, wndControl)
@@ -689,14 +734,23 @@ local function CreateGeneralTab()
                   end,
                 },
               },
-              { -- ResetPositionBtn
-                WidgetType = "PushButton",
-                Text = L["Reset Position"],
-                AnchorPoints = {0,0,0.5,0}, AnchorOffsets = {0,0,0,30},
-                Events = {
-                  ButtonSignal = function() N:GetModule("Clock"):ResetPosition() end,
-                },
-              },
+							{
+								AnchorPoints = {0,0,0.5,0}, AnchorOffsets = {0,0,0,30},
+								Children = {
+									{ -- ResetPositionBtn
+										WidgetType = "PushButton",
+										Base = "BK3:btnHolo_Blue_Med",
+										Text = L["Reset Position"],
+										TextTheme = "UI_BtnTextBlue",
+										AnchorPoints = "FILL",
+										AnchorOffsets = { -10, -16, 10, 16 },
+										NoClip = true,
+										Events = {
+											ButtonSignal = function() N:GetModule("Clock"):ResetPosition() end,
+										},
+									},
+								},
+							},
               
             },
           },
@@ -716,7 +770,7 @@ local function CreateGeneralTab()
             Children = {
               { -- CoordsEnableBtn
                 WidgetType    = "NavMateCheckBox",
-                Text          = L["Enable"],
+                Text          = "  " .. L["Enable"],
                 AnchorPoints  = {0,0,0.5,0}, AnchorOffsets = {0,0,0,30},
                 Events = {
                   ButtonCheck = function(_, wndHandler, wndControl)
@@ -736,7 +790,7 @@ local function CreateGeneralTab()
               
               { -- CoordsAnchorToMiniMapBtn
                 WidgetType    = "NavMateCheckBox",
-                Text          = L["Dock to MiniMap"],
+                Text          = "  " .. L["Dock to MiniMap"],
                 AnchorPoints  = {0,0,0.5,0}, AnchorOffsets = {0,0,0,30},
                 Events = {
                   ButtonCheck = function(_, wndHandler, wndControl)
@@ -752,14 +806,23 @@ local function CreateGeneralTab()
                   end,
                 },
               },
-              { -- ResetPositionBtn
-                WidgetType = "PushButton",
-                Text = L["Reset Position"],
-                AnchorPoints = {0,0,0.5,0}, AnchorOffsets = {0,0,0,30},
-                Events = {
-                  ButtonSignal = function() N:GetModule("Coords"):ResetPosition() end,
-                },
-              },
+							{
+								AnchorPoints = {0,0,0.5,0}, AnchorOffsets = {0,0,0,30},
+								Children = {
+									{ -- ResetPositionBtn
+										WidgetType = "PushButton",
+										Base = "BK3:btnHolo_Blue_Med",
+										Text = L["Reset Position"],
+										TextTheme = "UI_BtnTextBlue",
+										AnchorPoints = "FILL",
+										AnchorOffsets = { -10, -16, 10, 16 },
+										NoClip = true,
+										Events = {
+											ButtonSignal = function() N:GetModule("Coords"):ResetPosition() end,
+										},
+									},
+								},
+							},
             },
           },
         },
@@ -779,7 +842,7 @@ local function CreateGeneralTab()
             Children = {
               { -- ShowAllTaxiNodesOnZoneMapBtn
                 WidgetType    = "NavMateCheckBox",
-                Text          = L["Show Taxi Nodes on ZoneMap"],
+                Text          = "  " .. L["Show Taxi Nodes on ZoneMap"],
                 AnchorPoints  = {0,0,1,0}, AnchorOffsets = {0,0,0,30},
                 Events = {
                   ButtonCheck = function(_, wndHandler, wndControl)
@@ -796,7 +859,7 @@ local function CreateGeneralTab()
               },
               { -- MuteTaxiDriverBtn
                 WidgetType    = "NavMateCheckBox",
-                Text          = L["Mute Taxi Driver"],
+                Text          = "  " .. L["Mute Taxi Driver"],
                 AnchorPoints  = {0,0,1,0}, AnchorOffsets = {0,0,0,30},
                 Events = {
                   ButtonCheck = function(_, wndHandler, wndControl)
@@ -843,8 +906,8 @@ local function CreateWaypointsTab()
                     AnchorPoints = {0,0,0.33,1}, AnchorOffsets = { 5, 0,1,0},
                     DT_VCENTER = true,
                     Text = L["Arrival Distance"],
-                    Font             = "CRB_InterfaceSmall",
-                    TextColor        = "UI_TextHoloBodyHighlight",
+                    Font             = "CRB_InterfaceMedium",
+                    TextColor        = "UI_WindowTextDefault",
                   },
                 },
                 Children = {
@@ -894,7 +957,7 @@ local function CreateWaypointsTab()
               { -- ArrivalSoundBtn
                 WidgetType = "NavMateCheckBox",
                 AnchorPoints = {0,0,1,0}, AnchorOffsets = { 0,0,0,30 },
-                Text = L["Options_PlayArrivalSound"],
+                Text = "  " .. L["Options_PlayArrivalSound"],
                 Events = {
                   ButtonCheck = function(_, wndHandler, wndControl)
                     if wndHandler ~= wndControl then return end
@@ -927,7 +990,7 @@ local function CreateWaypointsTab()
               { -- ArrowEnableBtn
                 WidgetType    = "NavMateCheckBox",
                 AnchorPoints  = {0,0,0.33,0}, AnchorOffsets = { 0,0,0,30 },
-                Text          = L["Enable"],
+                Text          = "  " .. L["Enable"],
                 Events = {
                   ButtonCheck = function(_, wndHandler, wndControl)
                     if wndHandler ~= wndControl then return end
@@ -943,7 +1006,7 @@ local function CreateWaypointsTab()
               { -- ArrowInvertBtn
                 WidgetType    = "NavMateCheckBox",
                 AnchorPoints  = {0,0,0.33,0}, AnchorOffsets = { 0,0,0,30 },
-                Text          = L["Options_InvertArrow"],
+                Text          = "  " .. L["Options_InvertArrow"],
                 Events = {
                   ButtonCheck = function(_, wndHandler, wndControl)
                     if wndHandler ~= wndControl then return end
@@ -957,6 +1020,9 @@ local function CreateWaypointsTab()
                 },
               },
               FillerCell,
+              FillerCell,
+              FillerCell,
+              FillerCell,
               
               { -- HotColorFrame
                 Name = "HotColorFrame",
@@ -964,41 +1030,63 @@ local function CreateWaypointsTab()
                 
                 Pixies = {
                   {
-                    AnchorPoints = "FILL", AnchorOffsets = {38,6,0,-6},
+                    AnchorPoints = "FILL", AnchorOffsets = {38,0,0,0},
                     Text = L["Options_ArrowHot"],
-                    Font = "CRB_InterfaceSmall",
-                    TextColor = "UI_TextHoloBodyHighlight",
+                    Font = "CRB_InterfaceMedium",
+                    TextColor = "UI_WindowTextDefault",
                     DT_VCENTER = true,
                   },
                 },
                 
                 Children = {
-                  {
-                    Name = "SampleBorder",
-                    Sprite = "CRB_Basekit:kitBase_HoloBlue_SmallPlain",
-                    AnchorOffsets = {0,0,37,36},
-                    Children = {
-                      {
-                        Name = "Sample",
-                        AnchorFill = 8,
-                        Sprite = "ClientSprites:WhiteFill",
-                        Events = {
-                          MouseButtonDown = function(_, wndHandler, wndControl)
-                            if wndHandler ~= wndControl then return end
-                            if ColorPicker then 
-                              ColorPicker.AdjustCColor(N:GetModule("Arrow").config.colors.hot, false, function() 
-                                  wndControl:SetBGColor(N:GetModule("Arrow").config.colors.hot)
-                              end) 
-                            end
-                          end,
-                          WindowLoad = function(_, wndHandler, wndControl)
-                            if wndHandler ~= wndControl then return end
-                            wndControl:SetBGColor(N:GetModule("Arrow").config.colors.hot)
-                          end,
-                        },
-                      },
-                    },
-                  },
+									{
+										AnchorOffsets = { 3, 5, 27, 29 },
+										RelativeToClient = true, 
+										BGColor = "xkcdLavender", 
+										TextColor = "UI_WindowTextDefault", 
+										Name = "HotColorSample", 
+										Sprite = "BasicSprites:WhiteFill", 
+										Picture = true, 
+										IgnoreMouse = true, 
+										Events = {
+											WindowLoad = function(_, wndHandler, wndControl)
+												if wndHandler ~= wndControl then 
+													return
+												end
+												wndControl:SetBGColor(N:GetModule("Arrow").config.colors.hot)
+											end,
+										},
+
+										Children = {
+											{
+												AnchorOffsets = { -10, -10, 10, 10 },
+												AnchorPoints = "FILL",
+												Class = "Button", 
+												Base = "CRB_CraftingCircuitSprites:btnCircuit_SquareGlass_Blue", 
+												Font = "DefaultButton", 
+												ButtonType = "PushButton", 
+												DT_VCENTER = true, 
+												DT_CENTER = true, 
+												BGColor = "UI_BtnBGDefault", 
+												TextColor = "UI_BtnTextDefault", 
+												NormalTextColor = "UI_BtnTextDefault", 
+												PressedTextColor = "UI_BtnTextDefault", 
+												FlybyTextColor = "UI_BtnTextDefault", 
+												PressedFlybyTextColor = "UI_BtnTextDefault", 
+												DisabledTextColor = "UI_BtnTextDefault", 
+												Name = "HotColorPickerBtn", 
+												NoClip = true, 
+												Events = {
+													ButtonSignal = function(self, wndHandler, wndControl)
+														N.DaiColorPicker.AdjustColor(N:GetModule("Arrow").config.colors.hot, function(newColor, bIsFinal) 
+															N:GetModule("Arrow").config.colors.hot = newColor
+															wndControl:GetParent():SetBGColor(newColor)
+														end)
+													end,
+												},
+											},
+										},
+									},
                 },
               },
               { -- WarmColorFrame
@@ -1007,41 +1095,63 @@ local function CreateWaypointsTab()
                 
                 Pixies = {
                   {
-                    AnchorPoints = "FILL", AnchorOffsets = {38,6,0,-6},
+                    AnchorPoints = "FILL", AnchorOffsets = {38,0,0,0},
                     Text = L["Options_ArrowWarm"],
-                    Font = "CRB_InterfaceSmall",
-                    TextColor = "UI_TextHoloBodyHighlight",
+                    Font = "CRB_InterfaceMedium",
+                    TextColor = "UI_WindowTextDefault",
                     DT_VCENTER = true,
                   },
                 },
                 
                 Children = {
-                  {
-                    Name = "SampleBorder",
-                    Sprite = "CRB_Basekit:kitBase_HoloBlue_SmallPlain",
-                    AnchorOffsets = {0,0,37,36},
-                    Children = {
-                      {
-                        Name = "Sample",
-                        AnchorFill = 8,
-                        Sprite = "ClientSprites:WhiteFill",
-                        Events = {
-                          MouseButtonDown = function(_, wndHandler, wndControl)
-                            if wndHandler ~= wndControl then return end
-                            if ColorPicker then 
-                              ColorPicker.AdjustCColor(N:GetModule("Arrow").config.colors.warm, false, function() 
-                                  wndControl:SetBGColor(N:GetModule("Arrow").config.colors.warm)
-                              end) 
-                            end
-                          end,
-                          WindowLoad = function(_, wndHandler, wndControl)
-                            if wndHandler ~= wndControl then return end
-                            wndControl:SetBGColor(N:GetModule("Arrow").config.colors.warm)
-                          end,
-                        },
-                      },
-                    },
-                  },
+									{
+										AnchorOffsets = { 3, 5, 27, 29 },
+										RelativeToClient = true, 
+										BGColor = "xkcdLavender", 
+										TextColor = "UI_WindowTextDefault", 
+										Name = "HotColorSample", 
+										Sprite = "BasicSprites:WhiteFill", 
+										Picture = true, 
+										IgnoreMouse = true, 
+										Events = {
+											WindowLoad = function(_, wndHandler, wndControl)
+												if wndHandler ~= wndControl then 
+													return
+												end
+												wndControl:SetBGColor(N:GetModule("Arrow").config.colors.warm)
+											end,
+										},
+
+										Children = {
+											{
+												AnchorOffsets = { -10, -10, 10, 10 },
+												AnchorPoints = "FILL",
+												Class = "Button", 
+												Base = "CRB_CraftingCircuitSprites:btnCircuit_SquareGlass_Blue", 
+												Font = "DefaultButton", 
+												ButtonType = "PushButton", 
+												DT_VCENTER = true, 
+												DT_CENTER = true, 
+												BGColor = "UI_BtnBGDefault", 
+												TextColor = "UI_BtnTextDefault", 
+												NormalTextColor = "UI_BtnTextDefault", 
+												PressedTextColor = "UI_BtnTextDefault", 
+												FlybyTextColor = "UI_BtnTextDefault", 
+												PressedFlybyTextColor = "UI_BtnTextDefault", 
+												DisabledTextColor = "UI_BtnTextDefault", 
+												Name = "HotColorPickerBtn", 
+												NoClip = true, 
+												Events = {
+													ButtonSignal = function(self, wndHandler, wndControl)
+														N.DaiColorPicker.AdjustColor(N:GetModule("Arrow").config.colors.warm, function(newColor, bIsFinal) 
+															N:GetModule("Arrow").config.colors.warm = newColor
+															wndControl:GetParent():SetBGColor(newColor)
+														end)
+													end,
+												},
+											},
+										},
+									},
                 },
               },
 
@@ -1051,41 +1161,63 @@ local function CreateWaypointsTab()
                 
                 Pixies = {
                   {
-                    AnchorPoints = "FILL", AnchorOffsets = {38,6,0,-6},
+                    AnchorPoints = "FILL", AnchorOffsets = {38,0,0,0},
                     Text = L["Options_ArrowCold"],
-                    Font = "CRB_InterfaceSmall",
-                    TextColor = "UI_TextHoloBodyHighlight",
+                    Font = "CRB_InterfaceMedium",
+                    TextColor = "UI_WindowTextDefault",
                     DT_VCENTER = true,
                   },
                 },
                 
                 Children = {
-                  {
-                    Name = "SampleBorder",
-                    Sprite = "CRB_Basekit:kitBase_HoloBlue_SmallPlain",
-                    AnchorOffsets = {0,0,37,36},
-                    Children = {
-                      {
-                        Name = "Sample",
-                        AnchorFill = 8,
-                        Sprite = "ClientSprites:WhiteFill",
-                        Events = {
-                          MouseButtonDown = function(_, wndHandler, wndControl)
-                            if wndHandler ~= wndControl then return end
-                            if ColorPicker then 
-                              ColorPicker.AdjustCColor(N:GetModule("Arrow").config.colors.cold, false, function() 
-                                  wndControl:SetBGColor(N:GetModule("Arrow").config.colors.cold)
-                              end) 
-                            end
-                          end,
-                          WindowLoad = function(_, wndHandler, wndControl)
-                            if wndHandler ~= wndControl then return end
-                            wndControl:SetBGColor(N:GetModule("Arrow").config.colors.cold)
-                          end,
-                        },
-                      },
-                    },
-                  },
+									{
+										AnchorOffsets = { 3, 5, 27, 29 },
+										RelativeToClient = true, 
+										BGColor = "xkcdLavender", 
+										TextColor = "UI_WindowTextDefault", 
+										Name = "HotColorSample", 
+										Sprite = "BasicSprites:WhiteFill", 
+										Picture = true, 
+										IgnoreMouse = true, 
+										Events = {
+											WindowLoad = function(_, wndHandler, wndControl)
+												if wndHandler ~= wndControl then 
+													return
+												end
+												wndControl:SetBGColor(N:GetModule("Arrow").config.colors.cold)
+											end,
+										},
+
+										Children = {
+											{
+												AnchorOffsets = { -10, -10, 10, 10 },
+												AnchorPoints = "FILL",
+												Class = "Button", 
+												Base = "CRB_CraftingCircuitSprites:btnCircuit_SquareGlass_Blue", 
+												Font = "DefaultButton", 
+												ButtonType = "PushButton", 
+												DT_VCENTER = true, 
+												DT_CENTER = true, 
+												BGColor = "UI_BtnBGDefault", 
+												TextColor = "UI_BtnTextDefault", 
+												NormalTextColor = "UI_BtnTextDefault", 
+												PressedTextColor = "UI_BtnTextDefault", 
+												FlybyTextColor = "UI_BtnTextDefault", 
+												PressedFlybyTextColor = "UI_BtnTextDefault", 
+												DisabledTextColor = "UI_BtnTextDefault", 
+												Name = "HotColorPickerBtn", 
+												NoClip = true, 
+												Events = {
+													ButtonSignal = function(self, wndHandler, wndControl)
+														N.DaiColorPicker.AdjustColor(N:GetModule("Arrow").config.colors.cold, function(newColor, bIsFinal) 
+															N:GetModule("Arrow").config.colors.cold = newColor
+															wndControl:GetParent():SetBGColor(newColor)
+														end)
+													end,
+												},
+											},
+										},
+									},
                 },
               },
             },
@@ -1128,7 +1260,7 @@ local function CreateTradeSkillNodesTab()
               { -- Enable
                 WidgetType    = "NavMateCheckBox",
                 AnchorPoints  = {0,0,0.33,0}, AnchorOffsets = { 0,0,0,30 },
-                Text          = L["Show Nodes"],
+                Text          = "  " .. L["Show Nodes"],
                 Events = {
                   ButtonCheck   = function(_, wndHandler, wndControl) 
                     if wndHandler ~= wndControl then return end
@@ -1150,42 +1282,62 @@ local function CreateTradeSkillNodesTab()
                 Pixies = {
                   {
                     AnchorPoints = "FILL", AnchorOffsets = {40,6,0,-6},
-                    Text = L["Icon"],
-                    Font = "CRB_InterfaceSmall",
-                    TextColor = "UI_TextHoloBodyHighlight",
+                    Text = " " .. L["Icon"],
+                    Font = "CRB_InterfaceMedium",
+                    TextColor = "UI_WindowTextDefault",
                     DT_VCENTER = true,
                   },
                 },
                 
                 Children = {
-                  {
-                    Name          = "SampleBorder",
-                    Sprite        = "CRB_Basekit:kitBase_HoloBlue_SmallPlain",
-                    AnchorOffsets = {0,0,37,36},
-                    NoClip = true,
---                    IgnoreMouse   = true,
-                    Children = {
-                      {
-                        Name        = "Sample",
-                        AnchorFill  = 3,
-                        Sprite      = "ClientSprites:WhiteFill",
-                        Events = {
-                          MouseButtonDown = function(_, wndHandler, wndControl)
-                            if wndHandler ~= wndControl then return end
+									
+									{
+										AnchorOffsets = { 3, 5, 27, 29 },
+										RelativeToClient = true, 
+										BGColor = "ffffffff", 
+										TextColor = "UI_WindowTextDefault", 
+										Name = strTradeSkill .. "IconSample", 
+										Sprite = "BasicSprites:WhiteFill", 
+										Picture = true, 
+										IgnoreMouse = true, 
+										Events = {
+											WindowLoad = function(_, wndHandler, wndControl)
+												if wndHandler ~= wndControl then return end
+												wndControl:SetSprite(N.db.modules.map[strTradeSkill].sprIcon)
+											end,
+										},
+
+										Children = {
+											{
+												AnchorOffsets = { -10, -10, 10, 10 },
+												AnchorPoints = "FILL",
+												Class = "Button", 
+												Base = "CRB_CraftingCircuitSprites:btnCircuit_SquareGlass_Blue", 
+												Font = "DefaultButton", 
+												ButtonType = "PushButton", 
+												DT_VCENTER = true, 
+												DT_CENTER = true, 
+												BGColor = "UI_BtnBGDefault", 
+												TextColor = "UI_BtnTextDefault", 
+												NormalTextColor = "UI_BtnTextDefault", 
+												PressedTextColor = "UI_BtnTextDefault", 
+												FlybyTextColor = "UI_BtnTextDefault", 
+												PressedFlybyTextColor = "UI_BtnTextDefault", 
+												DisabledTextColor = "UI_BtnTextDefault", 
+												Name = strTradeSkill .. "IconPickerBtn", 
+												NoClip = true, 
+												Events = {
+													ButtonSignal = function(self, wndHandler, wndControl)
                             CreateIconPicker(wndControl:GetParent(), ktNodeIcons, 32, N.db.modules.map[strTradeSkill].sprIcon, function(strIcon)
                               N.db.modules.map[strTradeSkill].sprIcon = strIcon
-                              wndControl:SetSprite(strIcon)
+                              wndControl:GetParent():SetSprite(strIcon)
                               N:UpdateResourceNodes(true)
                             end)
-                          end,
-                          WindowLoad = function(_, wndHandler, wndControl)
-                            if wndHandler ~= wndControl then return end
-                            wndControl:SetSprite(N.db.modules.map[strTradeSkill].sprIcon)
-                          end,
-                        },
-                      },
-                    },
-                  },
+													end,
+												},
+											},
+										},
+									},
                 },
               },
             
@@ -1198,41 +1350,62 @@ local function CreateTradeSkillNodesTab()
                   {
                     AnchorPoints = "FILL", AnchorOffsets = {38,6,0,-6},
                     Text = L["Icon Color"],
-                    Font = "CRB_InterfaceSmall",
-                    TextColor = "UI_TextHoloBodyHighlight",
+                    Font = "CRB_InterfaceMedium",
+                    TextColor = "UI_WindowTextDefault",
                     DT_VCENTER = true,
                   },
                 },
                 
                 Children = {
-                  {
-                    Name          = "SampleBorder",
-                    Sprite        = "CRB_Basekit:kitBase_HoloBlue_SmallPlain",
-                    AnchorOffsets = {0,0,37,36},
-                    IgnoreMouse   = true,
-                    Children = {
-                      {
-                        Name        = "Sample",
-                        AnchorFill  = 8,
-                        Sprite      = "ClientSprites:WhiteFill",
-                        Events = {
-                          MouseButtonDown = function(_, wndHandler, wndControl)
-                            if wndHandler ~= wndControl then return end
-                            if ColorPicker then 
-                              ColorPicker.AdjustCColor(N.db.modules.map[strTradeSkill].color, false, function()
-                                  wndControl:SetBGColor(N.db.modules.map[strTradeSkill].color)
-                                  N:UpdateResourceNodes()
-                              end) 
-                            end
-                          end,
-                          WindowLoad = function(_, wndHandler, wndControl)
-                            if wndHandler ~= wndControl then return end
-                            wndControl:SetBGColor(N.db.modules.map[strTradeSkill].color)
-                          end,
-                        },
-                      },
-                    },
-                  },
+									{
+										AnchorOffsets = { 3, 5, 27, 29 },
+										RelativeToClient = true, 
+										BGColor = "xkcdLavender", 
+										TextColor = "UI_WindowTextDefault", 
+										Name = strTradeSkill .. "ColorSample", 
+										Sprite = "BasicSprites:WhiteFill", 
+										Picture = true, 
+										IgnoreMouse = true, 
+										Events = {
+											WindowLoad = function(_, wndHandler, wndControl)
+												if wndHandler ~= wndControl then 
+													return
+												end
+												wndControl:SetBGColor(N.db.modules.map[strTradeSkill].color)
+											end,
+										},
+
+										Children = {
+											{
+												AnchorOffsets = { -10, -10, 10, 10 },
+												AnchorPoints = "FILL",
+												Class = "Button", 
+												Base = "CRB_CraftingCircuitSprites:btnCircuit_SquareGlass_Blue", 
+												Font = "DefaultButton", 
+												ButtonType = "PushButton", 
+												DT_VCENTER = true, 
+												DT_CENTER = true, 
+												BGColor = "UI_BtnBGDefault", 
+												TextColor = "UI_BtnTextDefault", 
+												NormalTextColor = "UI_BtnTextDefault", 
+												PressedTextColor = "UI_BtnTextDefault", 
+												FlybyTextColor = "UI_BtnTextDefault", 
+												PressedFlybyTextColor = "UI_BtnTextDefault", 
+												DisabledTextColor = "UI_BtnTextDefault", 
+												Name = strTradeSkill .. "ColorPickerBtn", 
+												NoClip = true, 
+												Events = {
+													ButtonSignal = function(self, wndHandler, wndControl)
+														N.DaiColorPicker.AdjustColor(N.db.modules.map[strTradeSkill].color, function(newColor, bIsFinal) 
+															N.db.modules.map[strTradeSkill].color = newColor
+															wndControl:GetParent():SetBGColor(newColor)
+															N:UpdateResourceNodes()
+														end)
+													end,
+												},
+											},
+										},
+									},
                 },
               },
               
@@ -1243,7 +1416,7 @@ local function CreateTradeSkillNodesTab()
               { -- Icon
                 WidgetType    = "NavMateCheckBox",
                 AnchorPoints  = {0,0,0.33,0}, AnchorOffsets = { 0,0,0,30 },
-                Text          = L["Use Per Node"],
+                Text          = "  " .. L["Use Per Node"],
                 Events = {
                   ButtonCheck   = function(_, _, wndControl) 
                     N.db.modules.map[strTradeSkill].usePerNode = wndControl:IsChecked()
@@ -1257,22 +1430,32 @@ local function CreateTradeSkillNodesTab()
                   end,
                 },
               },
-              {
-                WidgetType = "PushButton",
-                Name = "NodeCustomizationButton",
-                AnchorPoints = { 0, 0, 0.33, 0 }, AnchorOffsets = {0,0,0,30},
-                Text = L["Node Customization"],
-                Enabled = N.db.modules.map[strTradeSkill].usePerNode,
-                Events = {
-                  ButtonSignal = function(_, wndHandler, wndControl)
-                    if wndHandler ~= wndControl then return end
-                    ShowPerNodeCustomization(strTradeSkill)
-                  end,
-                  WindowLoad = function(_, wndHandler, wndControl)
-                    if wndHandler ~= wndControl then return end
-                    wndControl:Enable(N.db.modules.map[strTradeSkill].usePerNode)
-                  end
-                },
+							{
+								AnchorPoints = { 0, 0, 0.33, 0 }, AnchorOffsets = {0,0,0,30},
+								Children = {
+									{
+										WidgetType = "PushButton",
+										Name = "NodeCustomizationButton",
+										Base = "BK3:btnHolo_Blue_Med",
+										TextTheme = "UI_BtnTextBlue",
+										Text = L["Node Customization"],
+										AnchorPoints = "FILL",
+										AnchorOffsets = { -16, -16, 16, 16 },
+										NoClip = true,
+										Enabled = N.db.modules.map[strTradeSkill].usePerNode,
+										Events = {
+											ButtonSignal = function(_, wndHandler, wndControl)
+												if wndHandler ~= wndControl then return end
+												ShowPerNodeCustomization(strTradeSkill)
+											end,
+											WindowLoad = function(_, wndHandler, wndControl)
+												if wndHandler ~= wndControl then return end
+												wndControl:Enable(N.db.modules.map[strTradeSkill].usePerNode)
+											end
+									},
+								},
+							},
+						
                 
               },
               FillerCell,
@@ -1297,7 +1480,7 @@ local function CreateMapTab()
       {
         WidgetType    = "NavMateCheckBox",
         AnchorPoints  = {0,0,1,0}, AnchorOffsets = { 0,0,0,30 },
-        Text          = strText,
+        Text          = "  " .. strText,
         Events = {
           ButtonCheck   = function(_, wndHandler, wndControl)
             if wndHandler ~= wndControl then return end
@@ -1329,7 +1512,7 @@ local function CreateMapTab()
               { -- SquareMiniMapBtn
                 WidgetType    = "NavMateCheckBox",
                 AnchorPoints  = {0,0,1,0}, AnchorOffsets = { 0,0,0,30 },
-                Text          = L["Options_SquareMiniMap"],
+                Text          = "  " .. L["Options_SquareMiniMap"],
                 Tooltip       = L["Options_SquareMiniMap_Tooltip"],
                 Events = {
                   ButtonCheck   = function(_, wndHandler, wndControl)
@@ -1376,7 +1559,7 @@ local function CreateMapTab()
             Children = {
               { -- ShowAllTaxiNodesOnZoneMapBtn
                 WidgetType    = "NavMateCheckBox",
-                Text          = L["Show Taxi Nodes"],
+                Text          = "  " .. L["Show Taxi Nodes"],
                 AnchorPoints  = {0,0,1,0}, AnchorOffsets = { 0,0,0,30},
                 Events = {
                   ButtonCheck = function(_, wndHandler, wndControl)
@@ -1414,41 +1597,60 @@ local function CreateMapTab()
                   {
                     AnchorPoints = "FILL", AnchorOffsets = {40,6,0,-6},
                     Text = L["Icon"],
-                    Font = "CRB_InterfaceSmall",
-                    TextColor = "UI_TextHoloBodyHighlight",
+                    Font = "CRB_InterfaceMedium",
+                    TextColor = "UI_WindowTextDefault",
                     DT_VCENTER = true,
                   },
                 },
                 
                 Children = {
-                  {
-                    Name          = "SampleBorder",
-                    Sprite        = "CRB_Basekit:kitBase_HoloBlue_SmallPlain",
-                    AnchorOffsets = {0,0,37,36},
-                    NoClip = true,
---                    IgnoreMouse   = true,
-                    Children = {
-                      {
-                        Name        = "Sample",
-                        AnchorFill  = 3,
-                        Sprite      = "ClientSprites:WhiteFill",
-                        Events = {
-                          MouseButtonDown = function(_, wndHandler, wndControl)
-                            if wndHandler ~= wndControl then return end
+									{
+										AnchorOffsets = { 3, 5, 27, 29 },
+										RelativeToClient = true, 
+										BGColor = "ffffffff", 
+										TextColor = "UI_WindowTextDefault", 
+										Name = "GroupMemberIconSample", 
+										Sprite = "BasicSprites:WhiteFill", 
+										Picture = true, 
+										IgnoreMouse = true, 
+										Events = {
+											WindowLoad = function(_, wndHandler, wndControl)
+												if wndHandler ~= wndControl then return end
+												wndControl:SetSprite(N.db.modules.map.group.sprIcon)
+											end,
+										},
+
+										Children = {
+											{
+												AnchorOffsets = { -10, -10, 10, 10 },
+												AnchorPoints = "FILL",
+												Class = "Button", 
+												Base = "CRB_CraftingCircuitSprites:btnCircuit_SquareGlass_Blue", 
+												Font = "DefaultButton", 
+												ButtonType = "PushButton", 
+												DT_VCENTER = true, 
+												DT_CENTER = true, 
+												BGColor = "UI_BtnBGDefault", 
+												TextColor = "UI_BtnTextDefault", 
+												NormalTextColor = "UI_BtnTextDefault", 
+												PressedTextColor = "UI_BtnTextDefault", 
+												FlybyTextColor = "UI_BtnTextDefault", 
+												PressedFlybyTextColor = "UI_BtnTextDefault", 
+												DisabledTextColor = "UI_BtnTextDefault", 
+												Name = "GroupMemberIconPickerBtn", 
+												NoClip = true, 
+												Events = {
+													ButtonSignal = function(self, wndHandler, wndControl)
                             CreateIconPicker(wndControl:GetParent(), ktNodeIcons, 32, N.db.modules.map.group.sprIcon, function(strIcon)
                               N.db.modules.map.group.sprIcon = strIcon
-                              wndControl:SetSprite(strIcon)
+                              wndControl:GetParent():SetSprite(strIcon)
                               UpdateGroupNodes()
                             end)
-                          end,
-                          WindowLoad = function(_, wndHandler, wndControl)
-                            if wndHandler ~= wndControl then return end
-                            wndControl:SetSprite(N.db.modules.map.group.sprIcon)
-                          end,
-                        },
-                      },
-                    },
-                  },
+													end,
+												},
+											},
+										},
+									},
                 },
               },
             
@@ -1461,41 +1663,64 @@ local function CreateMapTab()
                   {
                     AnchorPoints = "FILL", AnchorOffsets = {38,6,0,-6},
                     Text = L["Normal Color"],
-                    Font = "CRB_InterfaceSmall",
-                    TextColor = "UI_TextHoloBodyHighlight",
+                    Font = "CRB_InterfaceMedium",
+                    TextColor = "UI_WindowTextDefault",
                     DT_VCENTER = true,
                   },
                 },
                 
                 Children = {
-                  {
-                    Name          = "SampleBorder",
-                    Sprite        = "CRB_Basekit:kitBase_HoloBlue_SmallPlain",
-                    AnchorOffsets = {0,0,37,36},
-                    IgnoreMouse   = true,
-                    Children = {
-                      {
-                        Name        = "Sample",
-                        AnchorFill  = 8,
-                        Sprite      = "ClientSprites:WhiteFill",
-                        Events = {
-                          MouseButtonDown = function(_, wndHandler, wndControl)
-                            if wndHandler ~= wndControl then return end
-                            if ColorPicker then
-                              ColorPicker.AdjustCColor(N.db.modules.map.group.normalColor, false, function()
-                                  wndControl:SetBGColor(N.db.modules.map.group.normalColor)
-                                  UpdateGroupNodes()
-                              end) 
-                            end
-                          end,
-                          WindowLoad = function(_, wndHandler, wndControl)
-                            if wndHandler ~= wndControl then return end
-                            wndControl:SetBGColor(N.db.modules.map.group.normalColor)
-                          end,
-                        },
-                      },
-                    },
-                  },
+									{
+										AnchorOffsets = { 3, 5, 27, 29 },
+										RelativeToClient = true, 
+										BGColor = "xkcdLavender", 
+										TextColor = "UI_WindowTextDefault", 
+										Name = "GroupMemberNormalColorSample", 
+										Sprite = "BasicSprites:WhiteFill", 
+										Picture = true, 
+										IgnoreMouse = true, 
+										Events = {
+											WindowLoad = function(_, wndHandler, wndControl)
+												if wndHandler ~= wndControl then 
+													return
+												end
+												wndControl:SetBGColor(N.db.modules.map.group.normalColor)
+											end,
+										},
+
+										Children = {
+											{
+												AnchorOffsets = { -10, -10, 10, 10 },
+												AnchorPoints = "FILL",
+												Class = "Button", 
+												Base = "CRB_CraftingCircuitSprites:btnCircuit_SquareGlass_Blue", 
+												Font = "DefaultButton", 
+												ButtonType = "PushButton", 
+												DT_VCENTER = true, 
+												DT_CENTER = true, 
+												BGColor = "UI_BtnBGDefault", 
+												TextColor = "UI_BtnTextDefault", 
+												NormalTextColor = "UI_BtnTextDefault", 
+												PressedTextColor = "UI_BtnTextDefault", 
+												FlybyTextColor = "UI_BtnTextDefault", 
+												PressedFlybyTextColor = "UI_BtnTextDefault", 
+												DisabledTextColor = "UI_BtnTextDefault", 
+												Name = "GroupMemberNormalColorPickerBtn", 
+												NoClip = true, 
+												Events = {
+													ButtonSignal = function(self, wndHandler, wndControl)
+														N.DaiColorPicker.AdjustColor(N.db.modules.map.group.normalColor, function(newColor, bIsFinal) 
+															N.db.modules.map.group.normalColor = newColor
+															wndControl:GetParent():SetBGColor(newColor)
+															UpdateGroupNodes()
+														end)
+													end,
+												},
+											},
+										},
+									},
+									
+         
                 },
               },
               { -- PvPColorFrame
@@ -1506,41 +1731,62 @@ local function CreateMapTab()
                   {
                     AnchorPoints = "FILL", AnchorOffsets = {38,6,0,-6},
                     Text = L["PvP Combat"],
-                    Font = "CRB_InterfaceSmall",
-                    TextColor = "UI_TextHoloBodyHighlight",
+                    Font = "CRB_InterfaceMedium",
+                    TextColor = "UI_WindowTextDefault",
                     DT_VCENTER = true,
                   },
                 },
                 
                 Children = {
-                  {
-                    Name          = "SampleBorder",
-                    Sprite        = "CRB_Basekit:kitBase_HoloBlue_SmallPlain",
-                    AnchorOffsets = {0,0,37,36},
-                    IgnoreMouse   = true,
-                    Children = {
-                      {
-                        Name        = "Sample",
-                        AnchorFill  = 8,
-                        Sprite      = "ClientSprites:WhiteFill",
-                        Events = {
-                          MouseButtonDown = function(_, wndHandler, wndControl)
-                            if wndHandler ~= wndControl then return end
-                            if ColorPicker then 
-                              ColorPicker.AdjustCColor(N.db.modules.map.group.pvpColor, false, function()
-                                  wndControl:SetBGColor(N.db.modules.map.group.pvpColor)
-                                  UpdateGroupNodes()
-                              end) 
-                            end
-                          end,
-                          WindowLoad = function(_, wndHandler, wndControl)
-                            if wndHandler ~= wndControl then return end
-                            wndControl:SetBGColor(N.db.modules.map.group.pvpColor)
-                          end,
-                        },
-                      },
-                    },
-                  },
+									{
+										AnchorOffsets = { 3, 5, 27, 29 },
+										RelativeToClient = true, 
+										BGColor = "xkcdLavender", 
+										TextColor = "UI_WindowTextDefault", 
+										Name = "GroupMemberPvPColorSample", 
+										Sprite = "BasicSprites:WhiteFill", 
+										Picture = true, 
+										IgnoreMouse = true, 
+										Events = {
+											WindowLoad = function(_, wndHandler, wndControl)
+												if wndHandler ~= wndControl then 
+													return
+												end
+												wndControl:SetBGColor(N.db.modules.map.group.pvpColor)
+											end,
+										},
+
+										Children = {
+											{
+												AnchorOffsets = { -10, -10, 10, 10 },
+												AnchorPoints = "FILL",
+												Class = "Button", 
+												Base = "CRB_CraftingCircuitSprites:btnCircuit_SquareGlass_Blue", 
+												Font = "DefaultButton", 
+												ButtonType = "PushButton", 
+												DT_VCENTER = true, 
+												DT_CENTER = true, 
+												BGColor = "UI_BtnBGDefault", 
+												TextColor = "UI_BtnTextDefault", 
+												NormalTextColor = "UI_BtnTextDefault", 
+												PressedTextColor = "UI_BtnTextDefault", 
+												FlybyTextColor = "UI_BtnTextDefault", 
+												PressedFlybyTextColor = "UI_BtnTextDefault", 
+												DisabledTextColor = "UI_BtnTextDefault", 
+												Name = "GroupMemberPvPColorPickerBtn", 
+												NoClip = true, 
+												Events = {
+													ButtonSignal = function(self, wndHandler, wndControl)
+														N.DaiColorPicker.AdjustColor(N.db.modules.map.group.pvpColor, function(newColor, bIsFinal) 
+															N.db.modules.map.group.pvpColor = newColor
+															wndControl:GetParent():SetBGColor(newColor)
+															UpdateGroupNodes()
+														end)
+													end,
+												},
+											},
+										},
+									},
                 },
               },
             },

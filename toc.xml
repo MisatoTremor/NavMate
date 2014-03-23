@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Addon Author="daihenka" APIVersion="7" Name="NavMate" Description="Navigation Helper - Includes several QoL features for the Minimap and Zone Map." Version="0.9.3">
+<Addon Author="daihenka" APIVersion="7" Name="NavMate" Description="Navigation Helper - Includes several QoL features for the Minimap and Zone Map." Version="0.9.4">
   <!-- libraries -->
   <Script Name="libs/DaiAddon-1.0/DaiAddon.lua"/>
   <Script Name="libs/DaiGUI-1.0/DaiGUI.lua"/>
@@ -28,6 +28,7 @@
 
   <!-- core -->
   <Script Name="core.lua"/>
+  <Script Name="colorpicker.lua"/>
 
   <!-- addon replacements -->
   <ReplaceAddon Name="MiniMapFix"/>

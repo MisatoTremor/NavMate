@@ -532,4 +532,3 @@ _G["NavMate"] = {
     waypoints:Remove(tWaypoint)
   end
 }
-_G["NavMateTest"] = _G["NavMateTest"] or {}
