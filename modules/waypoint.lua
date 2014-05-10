@@ -34,8 +34,9 @@ function Waypoint:new(tWorldLoc, tZoneInfo, strName, tOpt)
 
   o.strIcon         = "sprMM_TargetObjective"
   o.crObject        = CColor.new(0,1,0,1)
-  o.nMiniMapObjectType = N:GetModule("MiniMapHooker"):GetMapMarkerType()
-  o.nZoneMapObjectType = N:GetModule("ZoneMapHooker"):GetMapMarkerType()
+--	table.insert(NavMateRestoreProcess, "Setting Waypoint " .. (strName or L["Unknown Waypoint"]) .. " minimap marker type")
+--  o.nMiniMapObjectType = N:GetModule("MiniMapHooker"):GetMapMarkerType()
+--  o.nZoneMapObjectType = N:GetModule("ZoneMapHooker"):GetMapMarkerType()
 	o.nContinentId    = tZoneInfo.continentId
   o.tWorldLoc       = tWorldLoc
   o.tZoneInfo       = tZoneInfo
@@ -62,11 +63,11 @@ end
 
 --- Add waypoint to the zone map
 function Waypoint:AddToZoneMap()
-	if _G["ZoneMapLibrary"] == nil then 
+	if g_wndTheZoneMap == nil then 
     return  -- ZoneMapLibrary doesn't exist! 
   end
 	local strName = self.strName and string.format("Waypoint: %s", self.strName) or L["Unknown Waypoint"]
-	self.nZoneMapObjectId = _G["ZoneMapLibrary"].wndZoneMap:AddObject(self.nZoneMapObjectType, self.tWorldLoc, strName, {
+	self.nZoneMapObjectId = g_wndTheZoneMap:AddObject(N:GetModule("ZoneMapHooker"):GetMapMarkerType(), self.tWorldLoc, strName, {
 		strIcon           = self.strIcon,
 		strIconEdge       = self.strIcon,
 		crObject          = self.crObject,
@@ -86,7 +87,7 @@ function Waypoint:AddToMiniMap()
 	local tCurrentZoneInfo = GameLib.GetCurrentZoneMap()
 	if tCurrentZoneInfo.continentId == self.nContinentId then
 		local strName = self.strName and string.format("Waypoint: %s", self.strName) or L["Unknown Waypoint"]
-		self.nMinimapObjectId = g_wndTheMiniMap:AddObject(self.nMiniMapObjectType, self.tWorldLoc, strName, {
+		self.nMinimapObjectId = g_wndTheMiniMap:AddObject(N:GetModule("MiniMapHooker"):GetMapMarkerType(), self.tWorldLoc, strName, {
       strIcon       = self.strIcon,
       crObject      = self.crObject,
       crEdge        = self.crObject,
@@ -146,8 +147,8 @@ function waypoints:Remove(tWaypoint)
 	end
 
 	-- remove from zone map and minimap	
-  if _G["ZoneMapLibrary"] ~= nil then
-		_G["ZoneMapLibrary"].wndZoneMap:RemoveObject(tWaypoint.nZoneMapObjectId)
+  if g_wndTheZoneMap ~= nil then
+		g_wndTheZoneMap:RemoveObject(tWaypoint.nZoneMapObjectId)
 	end
 	if g_wndTheMiniMap ~= nil and tWaypoint.nMinimapObjectId ~= nil then
 		g_wndTheMiniMap:RemoveObject(tWaypoint.nMinimapObjectId)

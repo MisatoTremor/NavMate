@@ -6,7 +6,7 @@ require "GameLib"
 
 local N = Apollo.GetAddon("NavMate")
 local L = N.L
-local DaiGUI = Apollo.GetPackage("DaiGUI-1.0").tPackage
+local GUILib = Apollo.GetPackage("Gemini:GUI-1.0").tPackage
 
 local ktModuleName = "Coords"
 
@@ -18,22 +18,17 @@ local Coords = N:NewModule(ktModuleName)
 local function CreateWindow(o, bDockToMiniMap)
   local tWndDef = {
     Name = "CoordsForm",
-    AnchorOffsets = {10,10,90,30},
-    Font = "CRB_InterfaceMedium_BO",
+		AnchorPoints = { 0.5, 1, 1, 1 },
+		AnchorOffsets = { 480, -24, -120, -4 },
+    Font = "CRB_Header9",
+		TextColor = "UI_TextHoloBodyCyan",
     IgnoreMouse = true,
     DT_CENTER = true,
     DT_VCENTER = true,
   }
   
-  local wndParent
-  if bDockToMiniMap and g_wndTheMiniMap then 
-    wndParent = g_wndTheMiniMap:GetParent()
-    tWndDef.NoClip = true
-  else
-    wndParent = "FixedHudStratum"
-  end
-  
-  return DaiGUI:Create(tWndDef):GetInstance(o, wndParent)
+  local wndParent = "FixedHudStratumHigh"
+  return GUILib:Create(tWndDef):GetInstance(o, wndParent)
 end
 
 -----------------------------------------------------------------------------------------------
@@ -46,14 +41,6 @@ local function MoveWindow(wnd, nLeft, nTop)
   
 	wnd:Move(nLeft, nTop, wnd:GetWidth(), wnd:GetHeight())
 end
-
-local function GetMiniMapPosition()
-  local wndMMParent     = g_wndTheMiniMap:GetParent()
-  local nLeft, nTop     = wndMMParent:GetPos()
-  local nWidth, nHeight = wndMMParent:GetWidth(), wndMMParent:GetHeight()
-  return nLeft, nTop, nWidth, nHeight
-end
-
 
 -----------------------------------------------------------------------------------------------
 -- Coordinates Block Definition
@@ -107,20 +94,16 @@ end
 
 
 
---- Reset the clock position to defaults
+--- Reset the coords position to defaults
 -- @param bForce Force position reset
 function Coords:ResetPosition(bForce)
   if not self.config.enable then
     return
   end
   
-  if self.config.isDocked then
-    local wndParent = self.wnd:GetParent()
-    local nTop = wndParent:GetHeight()
-    local nLeft = (wndParent:GetWidth() - self.wnd:GetWidth()) / 2
-    MoveWindow(self.wnd, nLeft, nTop)
-  else
-    local nWidth, nHeight = Apollo.GetScreenSize()
-    MoveWindow(self.wnd, (nWidth - self.wnd:GetWidth()) / 2, (nHeight - self.wnd:GetHeight()) / 2)
-  end
+	if self.wnd == nil then return end
+	
+	local nWidth, nHeight = Apollo.GetScreenSize()
+	self.wnd:SetAnchorPoints(0.5,1,1,1)
+	self.wnd:SetAnchorOffsets(480, -24, -120, -4)
 end

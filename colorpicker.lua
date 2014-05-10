@@ -1,11 +1,11 @@
 -----------------------------------------------------------------------------------------------
 -- ColorPicker
--- Requires DaiGUI-1.0
+-- Requires GeminiGUI-1.0
 -- @author daihenka
 -----------------------------------------------------------------------------------------------
 
 local aAddon = Apollo.GetAddon("NavMate")
-local DaiGUI = Apollo.GetPackage("DaiGUI-1.0").tPackage
+local GUILib = Apollo.GetPackage("Gemini:GUI-1.0").tPackage
 
 local function RGBToHex(r, g, b)
 	return string.format("%02x%02x%02x", math.floor(r * 255 + 0.5), math.floor(g * 255 + 0.5), math.floor(b * 255 + 0.5))
@@ -580,7 +580,7 @@ function DaiColorPicker.AdjustColor(initialColor, fnCallback)
 	local o = {}
 	setmetatable(o, DaiColorPicker)
     DaiColorPicker.__index = DaiColorPicker
-	o.wnd = DaiGUI:Create(tColorPickerFormDef):GetInstance(o)
+	o.wnd = GUILib:Create(tColorPickerFormDef):GetInstance(o)
 	o.bNewColor = false
 	o.fnCallback = fnCallback
 	o.crInitial = ApolloColor.new(initialColor)

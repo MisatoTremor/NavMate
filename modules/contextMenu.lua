@@ -1,11 +1,11 @@
 local NavMate        = Apollo.GetAddon("NavMate")
 local L              = NavMate.L
-local DaiGUI         = Apollo.GetPackage("DaiGUI-1.0").tPackage
-local GLocale        = Apollo.GetPackage("GeminiLocale-1.0").tPackage
+local GUILib         = Apollo.GetPackage("Gemini:GUI-1.0").tPackage
+local GLocale        = Apollo.GetPackage("Gemini:Locale-1.0").tPackage
 local waypoints      = NavMate.waypoints
 
 local function CreateWaypointContextMenuForm(o, p)
-  return DaiGUI:Create({
+  return GUILib:Create({
     Name                 = "WaypointContextMenuForm",
     AnchorOffsets        = {0,0,250,58},
     Sprite               = "CRB_Basekit:kitInnerFrame_MetalGrey_InlayStretch",
@@ -39,7 +39,7 @@ local function CreateWaypointContextMenuForm(o, p)
 end
 
 local function CreateWaypointContextMenuButton(o, p)
-  return DaiGUI:Create({
+  return GUILib:Create({
     Class               = "Button",
     Name                = "WaypointContextMenuButton",
     AnchorPoints        = "HFILL",
@@ -114,7 +114,7 @@ local function GetMapObjects(wnd, tPoint)
 	local eMapType = GetMapType(wnd)
 
 	if eMapType == NavMate.CodeEnumMapType.ZoneMap then
-		tMapObjects = _G["ZoneMapLibrary"].wndZoneMap:GetObjectsAt(tPoint.x, tPoint.y) -- all others
+		tMapObjects = g_wndTheZoneMap:GetObjectsAt(tPoint.x, tPoint.y) -- all others
 	elseif eMapType == NavMate.CodeEnumMapType.MiniMap then
 		tMapObjects = g_wndTheMiniMap:GetObjectsAtPoint(tPoint.x, tPoint.y) -- all others
 	end

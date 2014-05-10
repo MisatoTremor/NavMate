@@ -6,7 +6,7 @@ require "GameLib"
 
 local N = Apollo.GetAddon("NavMate")
 local L = N.L
-local DaiGUI = Apollo.GetPackage("DaiGUI-1.0").tPackage
+local GUILib = Apollo.GetPackage("Gemini:GUI-1.0").tPackage
 
 local ktModuleName = "Arrow"
 
@@ -213,7 +213,7 @@ local function CreateArrowForm(o)
       },
     },
   }
-  return DaiGUI:Create(tWndDef):GetInstance(o, "FixedHudStratum")
+  return GUILib:Create(tWndDef):GetInstance(o, "FixedHudStratum")
 end
 
 

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Addon Author="daihenka" APIVersion="7" Name="NavMate" Description="Navigation Helper - Includes several QoL features for the Minimap and Zone Map." Version="0.9.4">
+<Addon Author="daihenka" APIVersion="8" Name="NavMate" Description="Navigation Helper - Includes several QoL features for the Minimap and Zone Map." Version="0.9.5">
   <!-- libraries -->
-  <Script Name="libs/DaiAddon-1.0/DaiAddon.lua"/>
-  <Script Name="libs/DaiGUI-1.0/DaiGUI.lua"/>
+  <Script Name="libs/GeminiAddon-1.0/GeminiAddon.lua"/>
+  <Script Name="libs/GeminiGUI-1.0/GeminiGUI.lua"/>
   <Script Name="libs/GeminiLocale-1.0/GeminiLocale.lua"/>
 
   <!-- localization -->
@@ -16,7 +16,6 @@
 
   <!-- modules -->
   <Script Name="modules/waypoint.lua"/>
-  <Script Name="modules/clock.lua"/>
   <Script Name="modules/coords.lua"/>
   <Script Name="modules/arrow.lua"/>
   <Script Name="modules/hookMinimap.lua"/>

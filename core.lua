@@ -18,12 +18,12 @@ require "HexGroups"
 -- NavMate Module Definitions
 -----------------------------------------------------------------------------------------------
 local ADDON_NAME     = "NavMate"
-local CONFIG_VERSION = 1
+local CONFIG_VERSION = 2
 
 local NavMate        = Apollo.GetAddon("NavMate")
 local L              = NavMate.L
-local DaiGUI         = Apollo.GetPackage("DaiGUI-1.0").tPackage
-local GLocale        = Apollo.GetPackage("GeminiLocale-1.0").tPackage
+local GUILib         = Apollo.GetPackage("Gemini:GUI-1.0").tPackage
+local GLocale        = Apollo.GetPackage("Gemini:Locale-1.0").tPackage
 local Waypoint       = NavMate.Waypoint
 local waypoints      = NavMate.waypoints      -- waypoints collection
 
@@ -69,7 +69,6 @@ local ktResourceNodes = {
   farming  = { "SpirovineNode", "BladeleafNode", "YellowbellNode", "PummelgranateNode", "SerpentlilyNode", "GoldleafNode", "HoneywheatNode", "CrowncornNode", "CoralscaleNode", "LogicleafNode", "StoutrootNode", "GlowmelonNode", "FaerybloomNode", "WitherwoodNode", "FlamefrondNode", "GrimgourdNode", "MourningstarNode", "BloodbriarNode", "OctopodNode", "HeartichokeNode", "SmlGrowthshroomNode", "MedGrowthshroomNode", "LrgGrowthshroomNode", "SmlHarvestshroomNode", "MedHarvestshroomNode", "LrgHarvestshroomNode", "SmlRenewshroomNode", "MedRenewshroomNode", "LrgRenewshroomNode" },
   survival = { "AlgorocTreeNode", "CelestionTreeNode", "DeraduneTreeNode", "EllevarTreeNode", "GalerasTreeNode", "AuroriaTreeNode", "WhitevaleTreeNode", "DreadmoorTreeNode", "FarsideTreeNode", "CoralusTreeNode", "MurkmireTreeNode", "WilderrunTreeNode", "MalgraveTreeNode", "HalonRingTreeNode", "GrimvaultTreeNode" },
 }
-
 
 
 -- Function to rebuild the Minimap Markers info
@@ -281,7 +280,7 @@ function NavMate:OnUpdate()
         end
       end
       
-      if self.bRedrawWaypoints then
+      if self.bRedrawWaypoints and g_wndTheMiniMap and g_wndTheZoneMap then
         self:UpdateMapWaypoints()
       end
       
@@ -300,7 +299,7 @@ function NavMate:UpdateResourceNodes(bFullRedraw)
   self:GenerateMinimapMarkerInfo()
   -- update zonemap markers
 	for _, strModuleName in ipairs({"ZoneMapHooker", "MiniMapHooker"}) do
-  local zmHook = self:GetModule(strModuleName)
+		local zmHook = self:GetModule(strModuleName)
 		if zmHook and zmHook.addon and zmHook.addon.tMinimapMarkerInfo then
 			for k,v in pairs(self.tMinimapMarkerInfo) do
 				if zmHook.addon.tMinimapMarkerInfo[k] then
@@ -447,6 +446,8 @@ function NavMate:OnRestoreSettings(eLevel, tData)
   if eLevel ~= GameLib.CodeEnumAddonSaveLevel.Account then
     return
   end
+	NavMateRestoreProcess = {}
+	NavMateRestoreData = TableCopy(tData)
   
   if (tData.Version or 0) < CONFIG_VERSION then
     -- discard old versions of the config as they are incompatible
@@ -454,26 +455,35 @@ function NavMate:OnRestoreSettings(eLevel, tData)
   end
   
   DeserializeColors(tData)
+	table.insert(NavMateRestoreProcess, "DeserializeColors")
 
   -- merge the settings with the defaults
   TableMerge(self.db, tData)
+	table.insert(NavMateRestoreProcess, "TableMerge")
   
   -- restore waypoints
   self.db.modules.waypoints = self.db.modules.waypoints or {}
   self.db.modules.waypoints[GetCharacterKey()] = self.db.modules.waypoints[GetCharacterKey()] or {}
+	table.insert(NavMateRestoreProcess, "RestoreWaypoints-a")
   
   for idx, waypoint in ipairs(self.db.modules.waypoints[GetCharacterKey()]) do
     table.insert(self.waypoints, Waypoint.FromTable(waypoint))
   end
+	table.insert(NavMateRestoreProcess, "RestoreWaypoints-b")
   self.bRedrawWaypoints = true
   
   -- notify modules that restore settings has been called
+	table.insert(NavMateRestoreProcess, "StartModuleRestore")
   for strModuleName, oModule in self:IterateModules() do
     if type(oModule.OnRestoreSettings) == "function" then
+			table.insert(NavMateRestoreProcess, "StartRestoreModule - " .. strModuleName)
       oModule:OnRestoreSettings()
+			table.insert(NavMateRestoreProcess, "FinishRestoreModule - " .. strModuleName)
     end
   end
+	table.insert(NavMateRestoreProcess, "FinishModuleRestore")
   self:UpdateResourceNodes()
+	table.insert(NavMateRestoreProcess, "FinishRestore")
 end
 
 -----------------------------------------------------------------------------------------------

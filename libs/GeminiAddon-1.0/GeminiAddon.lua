@@ -1,4 +1,5 @@
---- DaiAddon-1.0
+--- GeminiAddon-1.0
+-- Formerly DaiAddon
 -- Inspired by AceAddon
 -- Modules and packages embeds are based heavily on AceAddon's functionally, so credit goes their authors.
 --
@@ -17,10 +18,10 @@
 -- OnInitialize -> OnEnable -> OnRestoreSettings
 -- OnSaveSettings is called upon reloadui and character log out.
 
-local MAJOR, MINOR = "DaiAddon-1.0", 2
-local APkg = Apollo.GetPackage("DaiAddon-1.0")
-local DaiAddon = APkg and Apollo.GetPackage("DaiAddon-1.0").tPackage or {}
-if DaiAddon and (DaiAddon._VERSION or 0) >= MINOR then
+local MAJOR, MINOR = "Gemini:Addon-1.0", 2
+local APkg = Apollo.GetPackage("Gemini:Addon-1.0")
+local GeminiAddon = APkg and Apollo.GetPackage("Gemini:Addon-1.0").tPackage or {}
+if GeminiAddon and (GeminiAddon._VERSION or 0) >= MINOR then
 	return -- no upgrade is needed
 end
 
@@ -30,14 +31,14 @@ local setmetatable, getmetatable, xpcall = setmetatable, getmetatable, xpcall
 local assert, loadstring, rawset, next, unpack = assert, loadstring, rawset, next, unpack
 local tinsert, tremove, ostime = table.insert, table.remove, os.time
 
-DaiAddon._VERSION     = MINOR
-DaiAddon.Addons       = DaiAddon.Addons or {}        -- addon collection
-DaiAddon.EnableQueue  = DaiAddon.EnableQueue or {}   -- addons awaiting to be enabled
-DaiAddon.RestoreQueue = DaiAddon.RestoreQueue or {}  -- addons awaiting to be restored
-DaiAddon.AddonStatus  = DaiAddon.AddonStatus or {}   -- status of addons
+GeminiAddon._VERSION     = MINOR
+GeminiAddon.Addons       = GeminiAddon.Addons or {}        -- addon collection
+GeminiAddon.EnableQueue  = GeminiAddon.EnableQueue or {}   -- addons awaiting to be enabled
+GeminiAddon.RestoreQueue = GeminiAddon.RestoreQueue or {}  -- addons awaiting to be restored
+GeminiAddon.AddonStatus  = GeminiAddon.AddonStatus or {}   -- status of addons
 
  -- per addon embedded packages list
-DaiAddon.Embeds       = DaiAddon.Embeds or setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end })
+GeminiAddon.Embeds       = GeminiAddon.Embeds or setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end })
 
 -- Check if the player unit is available
 local function IsPlayerInWorld()
@@ -86,19 +87,19 @@ end
 -- delay the firing the OnEnable callback until after OnLoad is called
 -- this is required if we are reloading the ui
 -- otherwise wait until CharacterCreated is fired
-Apollo.RegisterEventHandler("CharacterCreated", "OnCharacterCreated", DaiAddon)
+Apollo.RegisterEventHandler("CharacterCreated", "OnCharacterCreated", GeminiAddon)
 
 --- Processes the enable and restore queues when the player enters the world
 -- **Note:** do not call this manually
-function DaiAddon:OnCharacterCreated()
+function GeminiAddon:OnCharacterCreated()
   -- process enable queue for each addon
   while #self.EnableQueue > 0 do
     local oAddon = tremove(self.EnableQueue, 1)
-    DaiAddon:EnableAddon(oAddon)
+    GeminiAddon:EnableAddon(oAddon)
   end
   while #self.RestoreQueue > 0 do
     local tAddonRestore = tremove(self.RestoreQueue, 1)
-    DaiAddon:RestoreAddon(tAddonRestore.oAddon, tAddonRestore.eLevel, tAddonRestore.tSavedData)
+    GeminiAddon:RestoreAddon(tAddonRestore.oAddon, tAddonRestore.eLevel, tAddonRestore.tSavedData)
   end
 end
 
@@ -109,7 +110,7 @@ end
 local Enable, Disable, EmbedAddon, GetName, SetEnabledState
 local EmbedModule, EnableModule, DisableModule, NewModule, GetModule, SetDefaultModulePrototype, SetDefaultModuleState, SetDefaultModulePackages
 
--- Create a new addon using DaiAddon
+-- Create a new addon using GeminiAddon
 -- The final addon object will be returned.
 -- @paramsig [object, ] strAddonName, bOnConfigure[, tDependencies][, strPkgName, ...]
 -- @param object Table to use as the base for the addon (optional)
@@ -119,22 +120,22 @@ local EmbedModule, EnableModule, DisableModule, NewModule, GetModule, SetDefault
 -- @param strPkgName List of packages to embed into the addon - requires the packages to be registered with Apollo.RegisterPackage and for the packages to support embedding
 -- @usage
 -- -- Create a simple addon
--- local MyAddon = Apollo.GetPackage("DaiAddon-1.0").tPackage:NewAddon("MyAddon", false)
+-- local MyAddon = Apollo.GetPackage("Gemini:Addon-1.0").tPackage:NewAddon("MyAddon", false)
 -- 
 -- -- Create a simple addon with a configure button with custom text
--- local MyAddon = Apollo.GetPackage("DaiAddon-1.0").tPackage:NewAddon("MyAddon", "Addon Options Button")
+-- local MyAddon = Apollo.GetPackage("Gemini:Addon-1.0").tPackage:NewAddon("MyAddon", "Addon Options Button")
 -- 
 -- -- Create a simple addon with a configure button and a dependency on ChatLog / ChatLogEx
--- local MyAddon = Apollo.GetPackage("DaiAddon-1.0").tPackage:NewAddon("MyAddon", true, { "ChatLog", "ChatLogEx" })
+-- local MyAddon = Apollo.GetPackage("Gemini:Addon-1.0").tPackage:NewAddon("MyAddon", true, { "ChatLog", "ChatLogEx" })
 -- 
 -- -- Create an addon with a base object
 -- local tAddonBase = { config = { ... some default settings ... }, ... }
--- local MyAddon = Apollo.GetPackage("DaiAddon-1.0").tPackage:NewAddon(tAddonBase, "MyAddon", false)
+-- local MyAddon = Apollo.GetPackage("Gemini:Addon-1.0").tPackage:NewAddon(tAddonBase, "MyAddon", false)
 -- 
 -- -- Create an addon with a base object with a dependency on ChatLog / ChatLogEx
 -- local tAddonBase = { config = { ... some default settings ... }, ... }
--- local MyAddon = Apollo.GetPackage("DaiAddon-1.0").tPackage:NewAddon(tAddonBase, "MyAddon", false, { "ChatLog", "ChatLogEx" })
-function DaiAddon:NewAddon(oAddonOrName, ...)
+-- local MyAddon = Apollo.GetPackage("Gemini:Addon-1.0").tPackage:NewAddon(tAddonBase, "MyAddon", false, { "ChatLog", "ChatLogEx" })
+function GeminiAddon:NewAddon(oAddonOrName, ...)
   local oAddon, strAddonName
   local i = 1
 	-- get addon name
@@ -168,7 +169,7 @@ function DaiAddon:NewAddon(oAddonOrName, ...)
     error(("Usage: NewAddon([object, ] strAddonName, bOnConfigure[, tDependencies][, strPkgName, ...]): 'strAddonName' - string expected got '%s'."):format(type(strAddonName)), 2)
   end
   if self.Addons[strAddonName] then
-    error(("Usage: NewAddon([object, ] strAddonName, bOnConfigure[, tDependencies][, strPkgName, ...]): 'strAddonName' - Addon '%s' already registered in DaiAddon."):format(strAddonName), 2)
+    error(("Usage: NewAddon([object, ] strAddonName, bOnConfigure[, tDependencies][, strPkgName, ...]): 'strAddonName' - Addon '%s' already registered in GeminiAddon."):format(strAddonName), 2)
   end
   
   oAddon = oAddon or {}
@@ -198,12 +199,12 @@ function DaiAddon:NewAddon(oAddonOrName, ...)
 	-- Setup the OnLoad callback handler to initialize the addon
 	-- and either enable or delay enable the addon
   oAddon.OnLoad = function(self)
-    DaiAddon:InitializeAddon(self)
+    GeminiAddon:InitializeAddon(self)
     
     if IsPlayerInWorld() then
-      DaiAddon:EnableAddon(self)
+      GeminiAddon:EnableAddon(self)
     else
-      tinsert(DaiAddon.EnableQueue, self)
+      tinsert(GeminiAddon.EnableQueue, self)
     end
   end
   
@@ -213,7 +214,7 @@ function DaiAddon:NewAddon(oAddonOrName, ...)
     if IsPlayerInWorld() then
       safecall(self.OnRestoreSettings, self, eLevel, tSavedData)
     else
-      tinsert(DaiAddon.RestoreQueue, { oAddon = self, eLevel = eLevel, tSavedData = tSavedData })
+      tinsert(GeminiAddon.RestoreQueue, { oAddon = self, eLevel = eLevel, tSavedData = tSavedData })
     end
   end
   
@@ -231,22 +232,22 @@ function DaiAddon:NewAddon(oAddonOrName, ...)
   return oAddon  
 end
 
--- Get the addon object by its name from the internal DaiAddon addon registry
+-- Get the addon object by its name from the internal GeminiAddon addon registry
 -- Throws an error if the addon object cannot be found (except if silent is set)
--- @param strAddonName the addon name registered with DaiAddon
+-- @param strAddonName the addon name registered with GeminiAddon
 -- @param bSilent return nil if addon is not found instead of throwing an error
 -- @usage
--- local MyAddon = Apollo.GetPackage("DaiAddon-1.0"):GetAddon("MyAddon")
-function DaiAddon:GetAddon(strAddonName, bSilent)
+-- local MyAddon = Apollo.GetPackage("Gemini:Addon-1.0").tPackage:GetAddon("MyAddon")
+function GeminiAddon:GetAddon(strAddonName, bSilent)
   if not bSilent and not self.Addons[strAddonName] then
-    error(("Usage: GetAddon(strAddonName): 'strAddonName' - Cannot find an DaiAddon called '%s'."):format(tostring(strAddonName)), 2)
+    error(("Usage: GetAddon(strAddonName): 'strAddonName' - Cannot find an GeminiAddon called '%s'."):format(tostring(strAddonName)), 2)
   end
   return self.Addons[strAddonName]
 end
 
 
 -- Used internally when OnRestore is delayed
-function DaiAddon:RestoreAddon(oAddon, eLevel, tSavedData)
+function GeminiAddon:RestoreAddon(oAddon, eLevel, tSavedData)
   safecall(oAddon.OnRestoreSettings, oAddon, eLevel, tSavedData)
 end
 
@@ -255,7 +256,7 @@ end
 -- 
 -- **Note:** do not call this manually
 -- @param oAddon addon object to enable
-function DaiAddon:EnableAddon(oAddon)
+function GeminiAddon:EnableAddon(oAddon)
   if type(oAddon) == "string" then 
     oAddon = self:GetAddon(oAddon) 
   end
@@ -289,7 +290,7 @@ function DaiAddon:EnableAddon(oAddon)
   return self.AddonStatus[strAddonName]
 end
 
---function DaiAddon:DisableAddon(oAddon)
+--function GeminiAddon:DisableAddon(oAddon)
 --  if type(oAddon) == "string" then
 --    oAddon = self:GetAddon(oAddon)
 --  end
@@ -325,7 +326,7 @@ end
 --
 -- **Note:** do not call this manually
 -- @param oAddon addon object to initialize
-function DaiAddon:InitializeAddon(oAddon)
+function GeminiAddon:InitializeAddon(oAddon)
   safecall(oAddon.OnInitialize, oAddon)
   
   local tEmbeds = self.Embeds[oAddon]
@@ -341,7 +342,7 @@ end
 -- @paramsig oAddon[, strPkgName, ...]
 -- @param oAddon The addon object to embed packages in
 -- @param strPkgName List of packages to embed into the addon
-function DaiAddon:EmbedPackages(oAddon, ...)
+function GeminiAddon:EmbedPackages(oAddon, ...)
   for i = 1, select('#', ...) do
     local strPkgName = select(i, ...)
     self:EmbedPackage(oAddon, strPkgName, false, 4)
@@ -356,7 +357,7 @@ end
 -- @param strPkgName name of the package to embed
 -- @param bSilent marks an embed to fail silently if the package doesn't exist (optional)
 -- @param nOffset will push the error messages back to said offset, defaults to 2 (optional)
-function DaiAddon:EmbedPackage(oAddon, strPkgName, bSilent, nOffset)
+function GeminiAddon:EmbedPackage(oAddon, strPkgName, bSilent, nOffset)
   local oPkg = Apollo.GetPackage(strPkgName).tPackage
   if not oPkg and not bSilent then
     error(("Usage: EmbedPackage(oAddon, strPkgName, bSilent, nOffset): 'strPkgName' - Cannot find a package instance of '%s'."):format(tostring(strPkgName)), nOffset or 2)
@@ -391,7 +392,7 @@ end
 -- **Note:** do not call this manually
 -- @param strName unique name of the module
 -- @return oModule the module object
-function DaiAddon:NewModule(strName)
+function GeminiAddon:NewModule(strName)
   local oModule = {}
   oModule.Name = strName
   
@@ -422,17 +423,17 @@ function NewModule(self, strName, oPrototype, ...)
 	if type(oPrototype) ~= "string" and type(oPrototype) ~= "table" and type(oPrototype) ~= "nil" then error(("Usage: NewModule(strName, [oPrototype, [strPkgName, strPkgName, strPkgName, ...]): 'oPrototype' - table (oPrototype), string (strPkgName) or nil expected got '%s'."):format(type(oPrototype)), 2) end
 	if self.Modules[strName] then error(("Usage: NewModule(strName, [oPrototype, [strPkgName, strPkgName, strPkgName, ...]): 'strName' - Module '%s' already exists."):format(strName), 2) end
   
-  local oModule = DaiAddon:NewModule(string.format("%s_%s", self:GetName() or tostring(self), strName))
+  local oModule = GeminiAddon:NewModule(string.format("%s_%s", self:GetName() or tostring(self), strName))
   oModule.ModuleName = strName
   
   EmbedModule(oModule)
   
   if type(oPrototype) == "string" then
-    DaiAddon:EmbedPackages(oModule, oPrototype, ...)
+    GeminiAddon:EmbedPackages(oModule, oPrototype, ...)
 	else
-    DaiAddon:EmbedPackages(oModule, ...)
+    GeminiAddon:EmbedPackages(oModule, ...)
 	end
-	DaiAddon:EmbedPackages(oModule, unpack(self.DefaultModulePackages))
+	GeminiAddon:EmbedPackages(oModule, unpack(self.DefaultModulePackages))
 
 	if not oPrototype or type(oPrototype) == "string" then
 		oPrototype = self.DefaultModulePrototype or nil
@@ -465,8 +466,8 @@ end
 
 -- Check if the addon is queued to be enabled
 local function QueuedForEnable(oAddon)
-  for i = 1, #DaiAddon.EnableQueue do
-    if DaiAddon.EnableQueue[i] == oAddon then
+  for i = 1, #GeminiAddon.EnableQueue do
+    if GeminiAddon.EnableQueue[i] == oAddon then
       return true
     end
   end
@@ -474,7 +475,7 @@ local function QueuedForEnable(oAddon)
 end
 
 --- Enables the addon, if possible, returns true on success.
--- This internally calls DaiAddon:EnableAddon(), thus dispatching the OnEnable callback
+-- This internally calls GeminiAddon:EnableAddon(), thus dispatching the OnEnable callback
 -- and enabling all modules on the addon
 -- :Enable() also sets the internal `enableState` variable to true.
 -- @name //addon//:Enable
@@ -486,17 +487,17 @@ function Enable(self)
   if not QueuedForEnable(self) then
     if IsPlayerInWorld() then
       -- attempt to enable it
-      return DaiAddon:EnableAddon(self)
+      return GeminiAddon:EnableAddon(self)
     else
       -- add to enable queue
-      tinsert(DaiAddon.EnableQueue, self)
+      tinsert(GeminiAddon.EnableQueue, self)
     end
   end
 end
 
 --function Disable(self)
 --  self:SetEnabledState(false)
---  return DaiAddon:DisableAddon(self)
+--  return GeminiAddon:DisableAddon(self)
 --end
 
 
@@ -539,7 +540,7 @@ end
 -- @param strPkgName List of Packages to embed into the addon
 -- @usage 
 -- -- Create the addon object
--- local MyAddon = Apollo.GetPackage("DaiAddon-1.0").tPackage:NewAddon("MyAddon")
+-- local MyAddon = Apollo.GetPackage("Gemini:Addon-1.0").tPackage:NewAddon("MyAddon")
 -- -- Configure default packages for modules
 -- MyAddon:SetDefaultModulePackages("MyEmbeddablePkg-1.0")
 -- -- Create a module
@@ -558,7 +559,7 @@ end
 -- @param state Default state for new modules, true for enabled, false for disabled
 -- @usage 
 -- -- Create the addon object
--- local MyAddon = Apollo.GetPackage("DaiAddon-1.0").tPackage:NewAddon("MyAddon")
+-- local MyAddon = Apollo.GetPackage("Gemini:Addon-1.0").tPackage:NewAddon("MyAddon")
 -- -- Set the default state to "disabled"
 -- MyAddon:SetDefaultModuleState(false)
 -- -- Create a module and explicilty enable it
@@ -618,7 +619,7 @@ local function IterateModules(self) return pairs(self.Modules) end
 -- Returns an iterator of all embeds in the addon
 -- @name //addon//:IterateEmbeds
 -- @paramsig 
-local function IterateEmbeds(self) return pairs(DaiAddon.Embeds[self]) end
+local function IterateEmbeds(self) return pairs(GeminiAddon.Embeds[self]) end
 
 --- Query the enabledState of an addon.
 -- @name //addon//:IsEnabled
@@ -664,7 +665,7 @@ local tModuleMixins = {
     safecall(self.OnEnable, self)
     if self.EnabledState then
       -- embed packages
-      local tEmbeds = DaiAddon.Embeds[self]
+      local tEmbeds = GeminiAddon.Embeds[self]
       for i = 1, #tEmbeds do
         local oPkg = Apollo.GetPackage(tEmbeds[i]).tPackage
         if oPkg then
@@ -674,7 +675,7 @@ local tModuleMixins = {
     end
   end,
   Disable = function(self)
-    local tEmbeds = DaiAddon.Embeds[self]
+    local tEmbeds = GeminiAddon.Embeds[self]
     for i = 1, #tEmbeds do
       local oPkg = Apollo.GetPackage(tEmbeds[i]).tPackage
       if oPkg then
@@ -685,7 +686,7 @@ local tModuleMixins = {
 }
 
 -- Embed( target )
--- target (object) - target DaiAddon object to embed in
+-- target (object) - target GeminiAddon object to embed in
 --
 -- **Note:** This is for internal use only.  Do not call manually
 local function Embed(target, mixins)
@@ -706,24 +707,24 @@ end
 
 --- Get an iterator over all registered addons.
 -- @usage 
--- -- Print a list of all registered DaiAddons
--- for name, addon in DaiAddon:IterateAddons() do
+-- -- Print a list of all registered GeminiAddons
+-- for name, addon in GeminiAddon:IterateAddons() do
 --   print("Addon: " .. name)
 -- end
-function DaiAddon:IterateAddons() return pairs(self.Addons) end
+function GeminiAddon:IterateAddons() return pairs(self.Addons) end
 
 --- Get an iterator over the internal status registry.
 -- @usage 
 -- -- Print a list of all enabled addons
--- for name, status in DaiAddon:IterateAddonStatus() do
+-- for name, status in GeminiAddon:IterateAddonStatus() do
 --   if status then
 --     print("EnabledAddon: " .. name)
 --   end
 -- end
-function DaiAddon:IterateAddonStatus() return pairs(self.AddonStatus) end
+function GeminiAddon:IterateAddonStatus() return pairs(self.AddonStatus) end
 
 
-function DaiAddon:OnLoad() end
-function DaiAddon:OnDependencyError(strDep, strError) return false end
+function GeminiAddon:OnLoad() end
+function GeminiAddon:OnDependencyError(strDep, strError) return false end
 
-Apollo.RegisterPackage(DaiAddon, MAJOR, MINOR, {})
+Apollo.RegisterPackage(GeminiAddon, MAJOR, MINOR, {})

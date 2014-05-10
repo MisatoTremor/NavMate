@@ -1,7 +1,7 @@
 --Localization.enUS.lua
 local debug = false
 
-local L = Apollo.GetPackage("GeminiLocale-1.0").tPackage:NewLocale("NavMate", "enUS", true, not debug)
+local L = Apollo.GetPackage("Gemini:Locale-1.0").tPackage:NewLocale("NavMate", "enUS", true, not debug)
 
 if not L then
 	return

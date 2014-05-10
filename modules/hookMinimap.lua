@@ -9,7 +9,7 @@ local setmetatable, ipairs, pairs, type = setmetatable, ipairs, pairs, type
 
 local N = Apollo.GetAddon("NavMate")
 local L = N.L
-local DaiGUI = Apollo.GetPackage("DaiGUI-1.0").tPackage
+local GUILib = Apollo.GetPackage("Gemini:GUI-1.0").tPackage
 
 local ktModuleName = "MiniMapHooker"
 local MiniMapHooker = N:NewModule(ktModuleName)
@@ -18,34 +18,6 @@ MiniMapHooker.EnumMaskType = {
 	Default = 1,
 	Square  = 2,
 }
-
------------------------------------------------------------------------------------------------
--- UI Form Definition
------------------------------------------------------------------------------------------------
-local function CreateMiniMapMenuButton(o, p)
-	local wnd = DaiGUI:Create({
-		Class         = "Button",
-		Name          = "NavMateMiniMapMenuButton",
-		NoClip        = true,
-		TestAlpha     = true,
-		AnchorPoints  = "BOTTOMRIGHT",
-		AnchorOffsets = {-29,-25,-1,3},
-		Scale 				= 0.9,
-		DT_CENTER     = true,
-		DT_VCENTER    = true,
-		Base          = "CRB_Basekit:kitBtn_Metal_Options",
-		Tooltip       = L["NavMate Options"],
-		ButtonType    = "PushButton",
-		SwallowMouseClicks = true,
-		WindowSoundTemplate = "PushbuttonDigi01",
-		TransitionShowHide = true,
-		Events = {
-			ButtonSignal   = function() N:ToggleOptionsWindow() end,
-		},
-	}):GetInstance(o, p)
-	wnd:Show(false, true)
-	return wnd
-end
 
 -----------------------------------------------------------------------------------------------
 -- Constants / Lookup Tables
@@ -123,17 +95,17 @@ function MiniMapHooker:Initialize()
 --	Apollo.RegisterEventHandler("Group_UpdatePosition", "OnGroupUpdatePosition", self)
  
   self.config.mask = self.EnumMaskType.Default
-  self:Hook()
-  self.bInitialized = true
+	Apollo.RegisterTimerHandler("NMMMHookAsyncLoadTimer", "AsyncLoadCheck", self)
+  self:AsyncLoadCheck()
+	self.bInitialized = true
 end
 
-
-function MiniMapHooker:SetupMenu()
-  if self.addon == nil or self.wndMenuBtn ~= nil then
-    return
-  end
-  
-  self.wndMenuBtn = CreateMiniMapMenuButton(self, self.addon.wndMain:FindChild("ButtonContainer"))
+function MiniMapHooker:AsyncLoadCheck()
+	if g_wndTheMiniMap == nil then
+		Apollo.CreateTimer("NMMMHookAsyncLoadTimer", 1.0, false)
+	else
+		self:Hook()
+	end
 end
 
 function MiniMapHooker:MarkerEnabledState(strMarker)
@@ -280,298 +252,69 @@ function MiniMapHooker:HookHandleUnitCreated()
     local navmate = N
 		local groupConfig = N.db.modules.map.group
     self.addon.HandleUnitCreated = function(self, unitNew)
-      if self.tUnitsHidden and self.tUnitsHidden[unitNew:GetId()] then
-        self.tUnitsHidden[unitNew:GetId()] = nil
-        self.wndMiniMap:RemoveUnit(unitNew)
-      end
-      
-      if self.tUnitsShown and self.tUnitsShown[unitNew:GetId()] then
-        self.tUnitsShown[unitNew:GetId()] = nil
-        self.wndMiniMap:RemoveUnit(unitNew)
-      end
-
+			mm_oldHandleUnitCreated(self, unitNew)
+			
       local tActivation = unitNew:GetActivationState()
-      local strMarker 	= unitNew:GetMiniMapMarker()
-      local bShowUnit 	= unitNew:IsVisibleOnCurrentZoneMinimap()
-      local strType 		= unitNew:GetType()
-      
-      if bShowUnit == false and not unitNew:IsInYourGroup() then
-        self.tUnitsHidden[unitNew:GetId()] = {unitObject = unitNew} -- valid, but different subzone. Add it to the list
-        return
-      end
+      local tMarkers 	  = unitNew:GetMiniMapMarkers()
+--      local bShowUnit 	= unitNew:IsVisibleOnCurrentZoneMinimap()
+--      local strType 		= unitNew:GetType()
 
-      local tMarkerOverride 
-      if strMarker and N.tMinimapMarkerVisibility[strMarker] ~= nil then
-        if N.tMinimapMarkerInfo[strMarker]then
-          tMarkerOverride = self.tMinimapMarkerInfo[strMarker]
-        elseif N.tMinimapMarkerVisibility[strMarker] == false then
-          self.tUnitsHidden[unitNew:GetId()] = {strType = "TradeskillNodes", unitObject = unitNew}
-          return
-        end
-			elseif strType == "Harvest" then
-				self.arResourceNodes[unitNew:GetId()] = unitNew
-      end
 
-      if not self.unitPlayerDisposition then
+			if not self.unitPlayerDisposition then
         self.unitPlayerDisposition = GameLib.GetPlayerUnit()
       end
-      
-      -- NM: Check if we need to set the player path type 
-      if not self.playerPathType then
-        self.playerPathType = GameLib.GetPlayerUnit():GetPlayerPathType()
-      end
-      
-        
-      local eDisposition = unitNew:GetDispositionTo(self.unitPlayerDisposition)
-      local bShouldShowNameplate = unitNew:ShouldShowNamePlate() -- first pass at hiding units player shouldn't see
-      
-      -- NM: Check if unit is required for a quest 
-      local bQuestUnit = IsQuestOrChallengeUnit(unitNew)
-
-			-- Duplicates are handled in code; only one of each type per unit ID is kept (most recently added used).
-			-- This list represents the priority in which a unit's types will be drawn, with entries at the top having higher priority.
-			if unitNew:IsInYourGroup() then
-				for idx = 1, GroupLib.GetMemberCount() do
-					local tMemberInfo = GroupLib.GetGroupMember(idx)
-					if tMemberInfo.bIsOnline and GroupLib.GetUnitForGroupMember(idx) == unitNew then
-						local tInfo = self:GetDefaultUnitInfo()
-						tInfo.bAboveOverlay = true
-						tInfo.strIcon = groupConfig.sprIcon -- "sprMM_Group"
-						if tInfo.bInCombatPvp then
-              tInfo.crObject		= groupConfig.pvpColor -- CColor.new(0, 1, 0, 1)
-              tInfo.strIconEdge	= groupConfig.sprIcon
-              tInfo.crEdge 		  = groupConfig.pvpColor -- CColor.new(0, 1, 0, 1)
-						else
-              tInfo.crObject		= groupConfig.normalColor -- CColor.new(0, 1, 0, 1)
-              tInfo.strIconEdge	= groupConfig.sprIcon
-              tInfo.crEdge 		  = groupConfig.normalColor -- CColor.new(0, 1, 0, 1)
-						end
-						self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeGroupMember, tInfo, {bFixedSizeLarge = true}, false) -- not self.tToggledIcons[self.eObjectTypeGroupMember])
-						self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
+			
+			local eDisposition = unitNew:GetDispositionTo(self.unitPlayerDisposition)
+			local bShouldShowNameplate = unitNew:ShouldShowNamePlate() -- first pass at hiding units player shouldn't see
+     	local bQuestUnit = IsQuestOrChallengeUnit(unitNew)
+			
+			if bQuestUnit and tMarkers and #tMarkers > 0 then
+				for nIdx, strMarker in ipairs(tMarkers) do
+					local bAddMarker = false
+					
+					if strMarker == "Hostile" or strMarker == "Neutral" then
+						bAddMarker = true
 					end
+					
+					if bAddMarker then
+						self.wndMiniMap:RemoveUnit(unitNew)
+						local tMarkerInfo = self.tMinimapMarkerInfo[strMarker]
+						local tInfo = self:GetDefaultUnitInfo()
+						if tMarkerInfo.strIcon  then
+							tInfo.strIcon = tMarkerInfo.strIcon
+						end
+						tInfo.crObject = kcrMMRQuest
+						tInfo.crEdge = kcrMMRQuest
+						
+						local objectType = tMarkerInfo.objectType or GameLib.CodeEnumMapOverlayType.Unit
+						
+						local tMarkerOptions = {bNeverShowOnEdge = true}
+						if tMarkerInfo.bAboveOverlay then
+							tMarkerOptions.bAboveOverlay = tMarkerInfo.bAboveOverlay
+						end
+						if tMarkerInfo.bShown then
+							tMarkerOptions.bShown = tMarkerInfo.bShown
+						end
+						-- only one of these should be set
+						if tMarkerInfo.bFixedSizeSmall then
+							tMarkerOptions.bFixedSizeSmall = tMarkerInfo.bFixedSizeSmall
+						elseif tMarkerInfo.bFixedSizeMedium then
+							tMarkerOptions.bFixedSizeMedium = tMarkerInfo.bFixedSizeMedium
+						end
+						
+						self.wndMiniMap:AddUnit(unitNew, objectType, tInfo, tMarkerOptions, self.tToggledIcons[objectType] ~= nil and not self.tToggledIcons[objectType])
+						self.tUnitsShown[unitNew:GetId()] = { tInfo = tInfo, unitObject = unitNew, bQuestUnit = IsQuestOrChallengeUnit(unitNew)}
+					end					
 				end
-			end
-
-			if unitNew:IsFriend() then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "ClientSprites:Icon_Windows_UI_CRB_Friend"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeFriend, tInfo, {bNeverShowOnEdge = true, bShown = true, bFixedSizeSmall = true}, false)
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-
-			if unitNew:IsRival() then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "ClientSprites:Icon_Windows_UI_CRB_Rival"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeRival, tInfo, {bNeverShowOnEdge = true, bShown = true, bFixedSizeSmall = true}, false)
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-
-			if tActivation.Trainer ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "Icon_Windows_UI_VendorIcon"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeTrainer, tInfo, {bNeverShowOnEdge = true, bFixedSizeMedium = true}, not self.tToggledIcons[self.eObjectTypeTrainer])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-
-			if tActivation.QuestKill ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_TargetCreature"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeQuestKill, tInfo, {bNeverShowOnEdge = true, bFixedSizeMedium = true}, not self.tToggledIcons[self.eObjectTypeQuestReward])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			if tActivation.QuestTarget ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_TargetObjective"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeQuestTarget, tInfo, {bNeverShowOnEdge = true, bFixedSizeMedium = true}, not self.tToggledIcons[self.eObjectTypeQuestReward])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			if tActivation.PublicEventKill ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_TargetCreature"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypePublicEventKill, tInfo, {bNeverShowOnEdge = true, bFixedSizeMedium = true}, not self.tToggledIcons[self.eObjectTypePublicEvent])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			if tActivation.PublicEventTarget ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_TargetObjective"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypePublicEventTarget, tInfo, {bNeverShowOnEdge = true, bFixedSizeMedium = true}, not self.tToggledIcons[self.eObjectTypePublicEvent])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			if tActivation.QuestReward ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_QuestCompleteUntracked"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeQuestReward, tInfo, {bNeverShowOnEdge = true,}, not self.tToggledIcons[self.eObjectTypeQuestReward])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			if tActivation.QuestNew ~= nil or tActivation.QuestNewMain ~= nil or tActivation.QuestNewRepeatable ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_QuestGiver"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeQuestNew, tInfo, {bNeverShowOnEdge = true}, not self.tToggledIcons[self.eObjectTypeQuestReward])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			if tActivation.QuestReceiving ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_QuestCompleteOngoing"
-				tInfo.crObject = CColor.new(1.0, 1.0, 1.0, 1.0)
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeQuestReceiving, tInfo, {bNeverShowOnEdge = true,}, not self.tToggledIcons[self.eObjectTypeQuestReward])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			if tActivation.QuestNewSoon ~= nil or tActivation.QuestNewMainSoon ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_QuestGiverOngoing"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeQuestNewSoon, tInfo, {bNeverShowOnEdge = true}, not self.tToggledIcons[self.eObjectTypeQuestReward])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			if tActivation.ConvertItem ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_VendorGeneral"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeVendor, tInfo, {bNeverShowOnEdge = true, bFixedSizeMedium = true}, not self.tToggledIcons[self.eObjectTypeVendor])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			if tActivation.ConvertRep ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_VendorGeneral"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeVendor, tInfo, {bNeverShowOnEdge = true, bFixedSizeMedium = true}, not self.tToggledIcons[self.eObjectTypeVendor])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			if tActivation.Vendor ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_VendorGeneral"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeVendor, tInfo, {bNeverShowOnEdge = true, bFixedSizeMedium = true}, not self.tToggledIcons[self.eObjectTypeVendor])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			-- show mini map marker
-			if tMarkerOverride then
-				local tInfo = self:GetDefaultUnitInfo()
-				if tMarkerOverride.strIcon  then
-					tInfo.strIcon = tMarkerOverride.strIcon
-				end
-				if tMarkerOverride.crObject then
-					tInfo.crObject = tMarkerOverride.crObject
-				end
-				if tMarkerOverride.crEdge   then
-					tInfo.crEdge = tMarkerOverride.crEdge
-				end
-
-				local tMarkerOptions = {bNeverShowOnEdge = true}
-				if tMarkerOverride.bAboveOverlay then
-					tMarkerOptions.bAboveOverlay = tMarkerOverride.bAboveOverlay
-				end
-
-				local objectType = GameLib.CodeEnumMapOverlayType.Unit
-				if tMarkerOverride.objectType then
-					objectType = tMarkerOverride.objectType
-				end
-
-				self.wndMiniMap:AddUnit(unitNew, objectType, tInfo, tMarkerOptions, self.tToggledIcons[objectType] ~= nil and not self.tToggledIcons[objectType])
-				self.tUnitsShown[unitNew:GetId()] = { tInfo = tInfo, unitObject = unitNew }
-			end
-			-- instance portals
-			if unitNew:IsVisibleInstancePortal() then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_InstancePortal"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeInstancePortal, tInfo, {bNeverShowOnEdge = true}, not self.tToggledIcons[self.eObjectTypeInstancePortal])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			-- bind points
-				if unitNew:GetType() == "BindPoint" then
-				local tInfo = self:GetDefaultUnitInfo()
-				if unitNew:IsCurrentBindPoint() then
-					tInfo.strIcon = "sprMM_EldanGateActive"
-					self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeBindPointActive, tInfo, {bNeverShowOnEdge = true}, not self.tToggledIcons[self.eObjectTypeBindPointActive])
-					self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-				else
-					tInfo.strIcon = "sprMM_EldanGateInactive"
-					self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeBindPointInactive, tInfo, {bNeverShowOnEdge = true}, not self.tToggledIcons[self.eObjectTypeBindPointActive])
-					self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-				end
-			end
-			-- flight paths
-			if tActivation.FlightPathSettler ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_VendorFlight"
-				self.wndMiniMap:AddUnit(unitNew, tInfo, self.eObjectTypeVendorFlight, {bNeverShowOnEdge = true, bFixedSizeMedium = true}, false)
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			if tActivation.FlightPathNew ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMMIndicator"
-				self.wndMiniMap:AddUnit(unitNew, tInfo, self.eObjectTypeFlightPathNew, {bNeverShowOnEdge = true, bFixedSizeMedium = true}, false)
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			if tActivation.FlightPath ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_VendorFlight"
-				self.wndMiniMap:AddUnit(unitNew, tInfo, self.eObjectTypeVendorFlight, {bNeverShowOnEdge = true}, false)
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			-- tradeskill, auction and marketplace NPC's
-			if tActivation.TradeskillTrainer ~= nil or tActivation.CraftingStation ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_Tradeskill"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeTradeskills, tInfo, {bNeverShowOnEdge = true, bFixedSizeMedium = true}, not self.tToggledIcons[self.eObjectTypeTradeskills])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			if tActivation.CommodityMarketplace ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "CRB_MinimapSprites:sprMM_AuctionHouse"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeAuctioneer, tInfo, {bNeverShowOnEdge = true}, not self.tToggledIcons[self.eObjectTypeVendor])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			if tActivation.ItemAuctionhouse then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "CRB_MinimapSprites:sprMM_Bank"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeCommodity, tInfo, {bNeverShowOnEdge = true}, not self.tToggledIcons[self.eObjectTypeVendor])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-			if tActivation.SettlerImprovement ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_SmallIconSettler"
-				self.wndMiniMap:AddUnit(unitNew, GameLib.CodeEnumMapOverlayType.PathObjective, tInfo, {bNeverShowOnEdge = true}, not self.tToggledIcons[GameLib.CodeEnumMapOverlayType.PathObjective])
-				self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-
-      --[[ NavMate Added Toggles -- START ]]--
-			if eDisposition == Unit.CodeEnumDisposition.Neutral and bShouldShowNameplate and (strType == "NonPlayer" or strType == "Turret") then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "ClientSprites:MiniMapMarkerTiny"
-				-- NM: Check if unit is required for a quest 
-				tInfo.crObject = bQuestUnit and kcrMMRQuest or "xkcdBrightYellow"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeNeutral, tInfo, {bNeverShowOnEdge = true, bShown = false}, not self.tToggledIcons[self.eObjectTypeNeutral])
-        self.tUnitsShown[unitNew:GetId()] = {strType = bQuestUnit and "MMR_Quest" or "MMR_Neutral", unitObject = unitNew, bQuestUnit = IsQuestOrChallengeUnit(unitNew)}
-      end
-      
-			if eDisposition == Unit.CodeEnumDisposition.Hostile and bShouldShowNameplate  and (strType == "NonPlayer" or strType == "Turret") then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "ClientSprites:MiniMapMarkerTiny"
-				-- NM: Check if unit is required for a quest 
-				tInfo.crObject = bQuestUnit and kcrMMRQuest or "xkcdBrightRed"
-				self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeHostile, tInfo, {bNeverShowOnEdge = true, bShown = false}, not self.tToggledIcons[self.eObjectTypeHostile])
-        self.tUnitsShown[unitNew:GetId()] = {strType = bQuestUnit and "MMR_Quest" or "MMR_Hostile", unitObject = unitNew, bQuestUnit = IsQuestOrChallengeUnit(unitNew)}
-      end
-      
-      -- Bank Support
-      if tActivation.Bank ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "sprMM_Bank"
-        self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeBank, tInfo, {bNeverShowOnEdge=true}, not self.tToggledIcons[self.eObjectTypeBank])
-        self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
-			end
-        
-      -- Mailbox Support
-      if tActivation.Mail ~= nil then
-				local tInfo = self:GetDefaultUnitInfo()
-        tInfo.strIcon = "sprMM_Mailbox"
-        self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeMailbox, tInfo, {bNeverShowOnEdge=true}, not self.tToggledIcons[self.eObjectTypeMailbox])
-        self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
 			end
 			
+
       -- Collectable Journals / Datacubes
       if tActivation.Datacube ~= nil then
 				local tInfo = self:GetDefaultUnitInfo()
-				tInfo.strIcon = "NavMate_sprMM_Chat"
-				tInfo.crObject = "xkcdCandyPink"
-        self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeDatacube, tInfo, {bNeverShowOnEdge=true}, not self.tToggledIcons[self.eObjectTypeDatacube])
+				tInfo.strIcon = "spr_HUD_MenuIcons_Lore" -- "NavMate_sprMM_Chat" -- 
+				tInfo.crObject = "white"
+        self.wndMiniMap:AddUnit(unitNew, self.eObjectTypeDatacube, tInfo, {bNeverShowOnEdge=true, bFixedSizeSmall=true, bAboveOverlay=true}, not self.tToggledIcons[self.eObjectTypeDatacube])
         self.tUnitsShown[unitNew:GetId()] = {unitObject = unitNew}
       end
 			
@@ -602,26 +345,6 @@ function MiniMapHooker:HookHandleUnitCreated()
   end
 end
 
-local mm_oldOnMiniMapMouseEnter,mm_oldOnMiniMapMouseExit
-function MiniMapHooker:HookOnMiniMapMouseEnterExit()
-  if self.addon and mm_oldOnMiniMapMouseEnter == nil then
-    mm_oldOnMiniMapMouseEnter = self.addon.OnMiniMapMouseEnter
-    self.addon.OnMiniMapMouseEnter = function(self, wndHandler, wndControl)
-      self.wndMain:FindChild("NavMateMiniMapMenuButton"):Show(true)
-      mm_oldOnMiniMapMouseEnter(self, wndHandler, wndControl)
-    end
-  end
-  if self.addon and mm_oldOnMiniMapMouseExit == nil then
-    mm_oldOnMiniMapMouseExit = self.addon.OnMiniMapMouseExit 
-    self.addon.OnMiniMapMouseExit = function(self, wndHandler, wndControl)
-      self.wndMain:FindChild("NavMateMiniMapMenuButton"):Show(false)
-      mm_oldOnMiniMapMouseExit(self, wndHandler, wndControl)
-    end
-  end
-end
-
-
-
 function MiniMapHooker:IsValid()
   if self.addon and self.addon.wndMiniMap ~= nil and self.addon.wndMiniMap:IsValid() then
     return true
@@ -637,9 +360,7 @@ function MiniMapHooker:AddOverlayTypes()
 	if self:IsValid() and not self.bOverlayTypesAdded then
 		self.bOverlayTypesAdded = true
     
-    -- add mailbox and bank overlay types
-    self:AddOverlayType("Mailbox")
-    self:AddOverlayType("Bank")
+    -- add overlay types
     self:AddOverlayType("Datacube")
     self:AddOverlayType("Path")
     self:AddOverlayType("SettlerMinfrastructure")
@@ -647,8 +368,6 @@ function MiniMapHooker:AddOverlayTypes()
     self.addon.eObjectTypeNavMateWaypoint = self:GetMapMarkerType()
 		
 		-- set defaults for additional toggled icons
-		self.addon.tToggledIcons[self.addon.eObjectTypeMailbox] 	= self.addon.tToggledIcons[self.addon.eObjectTypeMailbox] or true
-		self.addon.tToggledIcons[self.addon.eObjectTypeBank] 			= self.addon.tToggledIcons[self.addon.eObjectTypeBank] or true
 		self.addon.tToggledIcons[self.addon.eObjectTypeDatacube] 	= self.addon.tToggledIcons[self.addon.eObjectTypeDatacube] or true
 		self.addon.tToggledIcons[self.addon.eObjectTypePath] 			= self.addon.tToggledIcons[self.addon.eObjectTypePath] or true
 		self.addon.tToggledIcons[self.addon.eObjectTypeSettlerMinfrastructure] = self.addon.tToggledIcons[self.addon.eObjectTypeSettlerMinfrastructure] or false
@@ -675,11 +394,11 @@ end
 --- hook the required minimap functions
 function MiniMapHooker:Hook()
   -- Get the minimap addon
-  self.addon = self.addon or _G["MiniMapLibrary"] or GetAddon("MiniMap")
-	if self.addon == nil then
+  self.addon = self.addon or GetAddon("MiniMap")
+	if self.addon == nil or g_wndTheMiniMap == nil then
 		return		-- MiniMap addon cannot be found, either replaced or disabled.
 	end
-  
+	
 	self:AddOverlayTypes()
 
   knMiniMapPingType = knMiniMapPingType or self.addon.eObjectTypePing
@@ -689,8 +408,6 @@ function MiniMapHooker:Hook()
   self:HookMapClick()
   self:HookQuestStateChanged()
   self:HookHandleUnitCreated()
-  self:HookOnMiniMapMouseEnterExit()
-  self:SetupMenu()
 end
 
 function MiniMapHooker:OnRestoreSettings()
@@ -768,7 +485,7 @@ function MiniMapHooker:SetMask(eMask)
     tWndDef.AnchorFill = 12
     
     -- add a backdrop
-    DaiGUI:Create({ Name = "SquareBackdrop", AnchorFill = 12, Sprite = "ClientSprites:WhiteFill", BGColor = "88000000", NewControlDepth = 0, NeverBringToFront = true, IgnoreMouse = true }):GetInstance(self.addon, self.addon.wndMain)
+    GUILib:Create({ Name = "SquareBackdrop", AnchorFill = 12, Sprite = "ClientSprites:WhiteFill", BGColor = "88000000", NewControlDepth = 0, NeverBringToFront = true, IgnoreMouse = true }):GetInstance(self.addon, self.addon.wndMain)
     
     -- hide the ring bg
     self.addon.wndMain:FindChild("MapRingBackground"):Show(false)
@@ -804,7 +521,7 @@ function MiniMapHooker:SetMask(eMask)
   
   local wndParent = self.addon.wndMiniMap:GetParent()
   self.addon.wndMiniMap:Destroy()
-  DaiGUI:Create(tWndDef):GetInstance(self.addon, wndParent)
+  GUILib:Create(tWndDef):GetInstance(self.addon, wndParent)
   self.addon.wndMiniMap = self.addon.wndMain:FindChild("MapContent")
   g_wndTheMiniMap = self.addon.wndMiniMap
 	
@@ -821,12 +538,9 @@ function MiniMapHooker:RedrawResourceNodes()
   if not self.addon then return end
   for _, tUnitsShown in ipairs({self.addon.tUnitsShown, self.addon.tUnitsHidden}) do
     for unitIdx, tUnitData in pairs(tUnitsShown) do
-      if tUnitData.unitObject:GetType() == "Harvest" then
-        local strMarker = tUnitData.unitObject:GetMiniMapMarker()
-        if strMarker then
-          self.addon:OnUnitChanged(tUnitData.unitObject)
-        end
-      end
+			if tUnitData.unitObject:CanBeHarvestedBy(GameLib.GetPlayerUnit()) then
+				self.addon:OnUnitChanged(tUnitData.unitObject)
+			end
     end
   end
 end

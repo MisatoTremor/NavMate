@@ -9,7 +9,7 @@ local setmetatable, ipairs, pairs, type, pcall = setmetatable, ipairs, pairs, ty
 
 local N = Apollo.GetAddon("NavMate")
 local L = N.L
-local DaiGUI = Apollo.GetPackage("DaiGUI-1.0").tPackage
+local GUILib = Apollo.GetPackage("Gemini:GUI-1.0").tPackage
 
 local ktModuleName = "ZoneMapHooker"
 local ZoneMapHooker = N:NewModule(ktModuleName)
@@ -73,7 +73,7 @@ local ktTaxiNodes = {
 -- UI Form Definition
 -----------------------------------------------------------------------------------------------
 local function CreateWaypointButton(o, p)
-  return DaiGUI:Create({
+  return GUILib:Create({
     Class = "Button",
     ButtonType = "PushButton",
     Base = "CRB_Basekit:kitBtn_Holo",
@@ -98,12 +98,20 @@ end
 -- Utility / Helper functions
 -----------------------------------------------------------------------------------------------
 
+local function GetAddon(strAddonName)
+	local info = Apollo.GetAddonInfo(strAddonName)
+
+	if info and info.bRunning == 1 then 
+		return Apollo.GetAddon(strAddonName)
+	end
+end
+
 --- Get the first object at point (excluding waypoints & minimap pings)
 -- @param wnd the map window
 -- @param tPoint coords on the map window
 -- @return map object
 local function GetPoi(wnd, tPoint)
-	local tMapObjects = _G["ZoneMapLibrary"].wndZoneMap:GetObjectsAt(tPoint.x, tPoint.y)
+	local tMapObjects = g_wndTheZoneMap:GetObjectsAt(tPoint.x, tPoint.y)
 	if tMapObjects == nil then 
 		return L["Unknown Waypoint"] 
 	end
@@ -140,8 +148,19 @@ function ZoneMapHooker:Initialize()
   
   self.nFactionId = GameLib.GetPlayerUnit():GetFaction()
 
-  self:Hook()
+	Apollo.RegisterTimerHandler("NMZMHookAsyncLoadTimer", "AsyncLoadCheck", self)
+  self:AsyncLoadCheck()
+
   self.bInitialized = true
+end
+
+NavMateZoneMapAsyncLoadCheck = {}
+function ZoneMapHooker:AsyncLoadCheck()
+	if g_wndTheZoneMap == nil then
+		Apollo.CreateTimer("NMZMHookAsyncLoadTimer", 1.0, false)
+	else
+		self:Hook()
+	end
 end
 
 function ZoneMapHooker:GetTaxiMapObjectType()
@@ -150,6 +169,19 @@ function ZoneMapHooker:GetTaxiMapObjectType()
   end
   return self.eObjectTypeTaxi or 969
 end
+
+function ZoneMapHooker:UpdateWaypointMarkers()
+  if g_wndTheZoneMap == nil then return end
+	
+  self.addon.wndZoneMap:RemoveObjectsByType(knMapMarkerType)
+	for idx, waypoint in ipairs(N.waypoints) do
+		waypoint.nZoneMapObjectId = nil
+		waypoint:AddToZoneMap()
+	end
+	
+	self.addon:SetTypeVisibility(knMapMarkerType, true)
+end
+
 
 function ZoneMapHooker:UpdateTaxiMarkers()
   if self.addon == nil then return end
@@ -168,8 +200,8 @@ function ZoneMapHooker:UpdateTaxiMarkers()
     self.addon.wndZoneMap:RemoveObjectsByType(eObjectType)
     -- figure out what continent the zonemap is in
     local tInfo = {
-      strIcon           = "sprMM_VendorFlight",
-      strIconEdge       = "sprMM_VendorFlight",
+      strIcon           = "IconSprites:Icon_MapNode_Map_Taxi_Undiscovered", -- "sprMM_VendorFlight",
+      strIconEdge       = "IconSprites:Icon_MapNode_Map_Taxi_Undiscovered", --"sprMM_VendorFlight",
       crObject          = "white",
       crEdge            = "white",
     }
@@ -201,19 +233,12 @@ end
 
 
 
-function ZoneMapHooker:GetMapMarkerType()
-	if not self.eMapMarkerType and self.addon then
-		self.eMapMarkerType = self.addon.wndZoneMap:CreateOverlayType()
-	end
-	return self.eMapMarkerType or 968
-end
-
 
 function ZoneMapHooker:ClearWaypointMarkers()
   if not self.addon then return end
   
 	if self.addon.wndZoneMap ~= nil then
-		self.addon.wndZoneMap:RemoveObjectsByType(self:GetMapMarkerType())
+		self.addon.wndZoneMap:RemoveObjectsByType(knMapMarkerType)
 	end
 end
 
@@ -282,22 +307,23 @@ function ZoneMapHooker:IsValid()
   return false
 end
 
--- AddExtraOverlayTypes
-function ZoneMapHooker:AddExtraOverlayTypes()
-	if self:IsValid() and not self.bExtraOverlayTypesAdded then
-		self.bExtraOverlayTypesAdded = true
-    
-    -- add mailbox and bank overlay types
-    self:AddOverlayType("Mailbox")
-    self:AddOverlayType("Bank")
---    self:AddOverlayType("NavMateWaypoint")
-    self.addon.eObjectTypeNavMateWaypoint = self:GetMapMarkerType()
-    table.insert(self.addon.arAllowedTypesSuperPanning, self.addon.eObjectTypeNavMateWaypoint)
-    table.insert(self.addon.arAllowedTypesPanning, self.addon.eObjectTypeNavMateWaypoint)
-    table.insert(self.addon.arAllowedTypesScaled, self.addon.eObjectTypeNavMateWaypoint)
-    table.insert(self.addon.arAllowedTypesContinent, self.addon.eObjectTypeNavMateWaypoint)
+function ZoneMapHooker:GetMapMarkerType()
+	if self.addon then 
+		return self.addon.eObjectTypeNavMateWaypoint
+	end
+end
+
+-- AddWaypointMarkerOverlayType
+function ZoneMapHooker:AddWaypointMarkerOverlayType()
+	if self:IsValid() and not self.addon.eObjectTypeNavMateWaypoint then
+    self.addon.eObjectTypeNavMateWaypoint = self.addon.wndZoneMap:CreateOverlayType()
+		table.insert(self.addon.arAllowedTypesSuperPanning, self.addon.eObjectTypeNavMateWaypoint)
+		table.insert(self.addon.arAllowedTypesPanning,      self.addon.eObjectTypeNavMateWaypoint)
+		table.insert(self.addon.arAllowedTypesScaled,       self.addon.eObjectTypeNavMateWaypoint)
+		table.insert(self.addon.arAllowedTypesContinent,    self.addon.eObjectTypeNavMateWaypoint)
     self.addon:SetTypeVisibility(self.addon.eObjectTypeNavMateWaypoint, true)
-  end
+		knMapMarkerType = knMapMarkerType or self.addon.eObjectTypeNavMateWaypoint
+	end
 end
 
 function ZoneMapHooker:AddOverlayType(overlayType)
@@ -354,7 +380,7 @@ function ZoneMapHooker:HookUnitCreated()
 			local eActivation = unitMade:GetActivationState()
 			local bShowUnit   = unitMade:IsVisibleOnCurrentZoneMinimap()
     
-      local strMarker = unitMade:GetMiniMapMarker()
+      local strMarker = unitMade:GetMiniMapMarkers()
       local tMarkerOverride
       if strMarker and N.tMinimapMarkerVisibility[strMarker] ~= nil then
         if N.tMinimapMarkerInfo[strMarker] and not N.tMinimapMarkerInfo[strMarker].bNotYetImplemented then
@@ -454,8 +480,7 @@ function ZoneMapHooker:HookZoneMapButtonDown()
 			
 			return tHexData
 		end
-		local nMarkerType = self:GetMapMarkerType()
-		
+	
     addon.OnZoneMapButtonDown = function(self, wndHandler, wndControl, eButton, nX, nY, bDoubleClick)
 			local tPoint    = self.wndZoneMap:WindowPointToClientPoint(nX, nY)
 			local tWorldLoc = self.wndZoneMap:GetWorldLocAtPoint(tPoint.x, tPoint.y)
@@ -477,7 +502,7 @@ function ZoneMapHooker:HookZoneMapButtonDown()
 			elseif eButton == 1 then
 				-- right click - context menu for waypoint if waypoint exists
 				-- context menu the first waypoint object it finds
-        N:OnShowWaypointContextMenu(self.wndZoneMap, tPoint, nMarkerType)
+        N:OnShowWaypointContextMenu(self.wndZoneMap, tPoint, knMapMarkerType)
 			end
 			
       zm_oldOnZoneMapButtonDown(self, wndHandler, wndControl, eButton, nX, nY, bDoubleClick)
@@ -521,33 +546,23 @@ end
 
 --- hook the zonemap required functions
 function ZoneMapHooker:Hook()
-  self.addon = self.addon or _G["ZoneMapLibrary"]
-	if not self.addon then
+  self.addon = self.addon or GetAddon("ZoneMap")
+	if not self:IsValid() then
 		return -- ZoneMapLibrary global addon cannot be found
 	end
-  self:AddExtraOverlayTypes()
-  
-  knMapMarkerType = knMapMarkerType or self:GetMapMarkerType()
-
+  self:AddWaypointMarkerOverlayType()
   self:AddTaxiToVisibilityLevels()
 
-  self:HookUpdateMissionList()
-  self:HookUpdateChallengeList()
-  self:HookOnCityDirectionsList()
-  self:HookFactoryProduce()
-  self:HookUpdateQuestList()
-  self:HookUpdatePublicEventList()
-  
-  self:HookUnitCreated()
   self:HookContinentButtons()
   self:HookZoneMapButtonDown()
   
-  self:CreateClearWaypointsButton()
+--  self:CreateClearWaypointsButton()
   
-  self:HookDrawGroupMembers()
-  self:HookResizeOptionsPane()
+--  self:HookDrawGroupMembers()
+--  self:HookResizeOptionsPane()
 	
 	self:UpdateTaxiMarkers()
+	self:UpdateWaypointMarkers()
   
   if self.oClearWaypointsBtn then
     self.oClearWaypointsBtn:Show(true)
@@ -563,8 +578,6 @@ function ZoneMapHooker:OnSaveSettings()
   if not self.addon then return end
   
   self.config.ghostMode = self.config.bZoneMapGhostMode or false
-  self.config.tToggledTypes = self:GetToggledTypes()
-  self.config.bShowLabels = self.addon.wndZoneMap:IsShowLabelsOn()
 end
 
 
@@ -589,14 +602,12 @@ local function TableCopy(t)
 end
 function ZoneMapHooker:RedrawResourceNodes()
   if not self.addon then return end
+	
   for _, tUnitsShown in ipairs({self.addon.tUnitsShown, self.addon.tUnitsHidden}) do
     for unitIdx, tUnitData in pairs(tUnitsShown) do
-      if tUnitData.unitValue:GetType() == "Harvest" then
-        local strMarker = tUnitData.unitValue:GetMiniMapMarker()
-        if strMarker then
-          self.addon:OnUnitChanged(tUnitData.unitValue)
-        end
-      end
+			if tUnitData.unitValue:CanBeHarvestedBy(GameLib.GetPlayerUnit()) then
+				self.addon:OnUnitChanged(tUnitData.unitValue)
+			end
     end
   end
 end
@@ -625,7 +636,7 @@ end
 --- Updates the zone map from the saved configuration
 -- including ghost mode, position and markers
 function ZoneMapHooker:Update()
-  if not self.bRequireConfigRestore or self.addon == nil then
+  if not self.bRequireConfigRestore or self.addon == nil or self.addon.wndZoneMap == nil then
     return
   end
   
@@ -635,24 +646,24 @@ function ZoneMapHooker:Update()
     self:SetGhostMode(self.config.ghostMode)
   end
   -- restore the map marker preferences
-  if self.config.tToggledTypes ~= nil then
-    for idx, wndBtn in ipairs(self.addon.wndMain:FindChild("MarkersList:MarkerPaneButtonList"):GetChildren()) do
-      local eType = wndBtn:GetData()
-      if self.config.tToggledTypes[eType] ~= nil then
-        if self.config.tToggledTypes[eType] then
-          self.addon:OnMarkerBtnCheck(wndBtn, wndBtn)
-        else
-          self.addon:OnMarkerBtnUncheck(wndBtn, wndBtn)
-        end
-        wndBtn:SetCheck(self.config.tToggledTypes[eType])
-      end
-    end
-  end
-  if self.config.bShowLabels ~= nil then
-    local wndLabelsBtn = self.addon.wndMain:FindChild("MarkersList:MarkerPaneButtonList:OptionsBtnLabels")
-    wndLabelsBtn:SetCheck(self.config.bShowLabels)
-    self.addon:OnToggleLabels(wndLabelsBtn, wndLabelsBtn)
-  end
+--  if self.config.tToggledTypes ~= nil then
+--    for idx, wndBtn in ipairs(self.addon.wndMain:FindChild("MarkersList:MarkerPaneButtonList"):GetChildren()) do
+--      local eType = wndBtn:GetData()
+--      if self.config.tToggledTypes[eType] ~= nil then
+--        if self.config.tToggledTypes[eType] then
+--          self.addon:OnMarkerBtnCheck(wndBtn, wndBtn)
+--        else
+--          self.addon:OnMarkerBtnUncheck(wndBtn, wndBtn)
+--        end
+--        wndBtn:SetCheck(self.config.tToggledTypes[eType])
+--      end
+--    end
+--  end
+--  if self.config.bShowLabels ~= nil then
+--    local wndLabelsBtn = self.addon.wndMain:FindChild("MarkersList:MarkerPaneButtonList:OptionsBtnLabels")
+--    wndLabelsBtn:SetCheck(self.config.bShowLabels)
+--    self.addon:OnToggleLabels(wndLabelsBtn, wndLabelsBtn)
+--  end
   self.addon.bIgnoreQuestStateChanged = false
   self:RedrawResourceNodes()
 end
@@ -673,312 +684,3 @@ function ZoneMapHooker:SetGhostMode(bGhostMode)
   end
 end
 
-
-
------------------------------------------------------------------------------------------------
--- Temp Fix for ZoneMap LoadForms! -- WTB AssetFolder bug being fixed... this shouldn't be needed. Sigh!
------------------------------------------------------------------------------------------------
-local zoneMapFormFile = [[ui\ZoneMap\ZoneMapForms.xml]]
-
-local knPOIColorHidden 					= 0
-local knPOIColorShown 					= 4294967295
-local kcrButtonColorNormal 				= CColor.new(0.0, 191/255, 1.0, 1.0)
-local kcrButtonColorPressed 			= CColor.new(1.0, 1.0, 1.0, 1.0)
-local kcrButtonColorDisabled 			= CColor.new(0.0, 121/255, 121/255, 1.0)
-local kcrQuestNumberColor 				= CColor.new(198/255, 255/255, 255/255, 1.0)
-local knQuestItemHeight 				= 20
-local kstrQuestFont 					= "CRB_InterfaceMedium_B"
-local kstrQuestNameColor 				= "ffffffff"
-local kstrQuestNameColorComplete 		= "ff2fdc02"
-local kstrQuestNameColorTimed 			= "fffffc00"
-local kcrEpisodeColor 					= "ff31fcf6"
-local kcrEpisodeColorMinimized 			= "cc21a5a1"
-
-
-local zm_oldUpdateChallengeList
-function  ZoneMapHooker:HookUpdateChallengeList()
-  if self.addon and zm_oldUpdateChallengeList == nil then
-    zm_oldUpdateChallengeList = self.addon.UpdateChallengeList
-    self.addon.UpdateChallengeList = function(self)
-      if self.wndMain == nil then
-        -- yes, it is possible for this to be nil here because we might not have gotten the OnLoad event yet
-        return
-      end
-
-      self.wndMapControlPanel:FindChild("ChallengePaneContentList"):DestroyChildren()
-      
-      local tChallengeList = ChallengesLib:GetActiveChallengeList()
-
-      local nCount = 0
-      for id, chalCurrent in pairs(tChallengeList) do
-        if chalCurrent:IsActivated() then
-          local wndLine = Apollo.LoadForm(zoneMapFormFile, "ChallengeEntry", self.wndMapControlPanel:FindChild("ChallengePaneContentList"), self)
-          local wndNumber = wndLine:FindChild("TextNumber")
-
-          -- number the queCurr
-          nCount = nCount + 1
-          wndNumber:SetText(String_GetWeaselString(Apollo.GetString("ZoneMap_TextNumber"), nCount))
-          wndNumber:SetTextColor(kcrQuestNumberColor)
-
-          wndLine:FindChild("TextNoItem"):Enable(false)
-          
-          local strTitle = string.format("<P Font=\"%s\" TextColor=\"%s\">%s</P>", kstrQuestFont, kstrQuestNameColor, chalCurrent:GetName())
-          
-          wndLine:FindChild("TextNoItem"):SetAML(strTitle)
-          wndLine:FindChild("ChallengeBacker"):SetBGColor(CColor.new(1,1,1,0.5))
-          wndLine:SetData(chalCurrent)
-
-          local nTextWidth, nTextHeight = wndLine:FindChild("TextNoItem"):SetHeightToContentHeight()
-          local nLeft, nTop, nRight, nBottom = wndLine:GetAnchorOffsets()
-          wndLine:SetAnchorOffsets(nLeft, nTop, nRight, 10 + math.max(knQuestItemHeight, nTextHeight))
-        end
-      end
-
-      self.wndMapControlPanel:FindChild("ChallengePaneContentList"):ArrangeChildrenVert(0)    
-    end
-  end
-end
-
-local zm_oldUpdateMissionList
-function ZoneMapHooker:HookUpdateMissionList()
-  if self.addon and zm_oldUpdateMissionList == nil then
-    zm_oldUpdateMissionList = self.addon.UpdateMissionList
-    self.addon.UpdateMissionList = function(self)
-      if self.wndMain == nil then
-        -- yes, it is possible for this to be nil here because we might not have gotten the OnLoad event yet
-        return
-      end
-
-      self.wndMapControlPanel:FindChild("MissionPaneContentList"):DestroyChildren()
-      local epiPathEpisode = PlayerPathLib.GetCurrentEpisode()
-      if epiPathEpisode == nil then
-        return
-      end
-      
-      local tMissionList = epiPathEpisode:GetMissions()
-
-      local nCount = 0
-      for idx, pmCurrent in ipairs(tMissionList) do
-        local state = pmCurrent:GetMissionState()
-        if state == PathMission.PathMissionState_Unlocked or state == PathMission.PathMissionState_Started then
-          local wndMissionLine = Apollo.LoadForm(zoneMapFormFile, "MissionEntry", self.wndMapControlPanel:FindChild("MissionPaneContentList"), self)
-          local wndNumber = wndMissionLine:FindChild("TextNumber")
-
-        
-          -- number the queCurr
-          nCount = nCount + 1
-          wndNumber:SetText(String_GetWeaselString(Apollo.GetString("ZoneMap_TextNumber"), nCount))
-          wndNumber:SetTextColor(kcrQuestNumberColor)
-
-          wndMissionLine:FindChild("TextNoItem"):Enable(false)
-          
-          local strMissionTitle = string.format("<P Font=\"%s\" TextColor=\"%s\">%s</P>", kstrQuestFont, kstrQuestNameColor, pmCurrent:GetName())
-          
-          wndMissionLine:FindChild("TextNoItem"):SetAML(strMissionTitle)
-          wndMissionLine:FindChild("MissionBacker"):SetBGColor(CColor.new(1,1,1,0.5))
-          wndMissionLine:SetData(pmCurrent)
-
-          local nQuestTextWidth, nQuestTextHeight = wndMissionLine:FindChild("TextNoItem"):SetHeightToContentHeight()
-          local nLeft, nTop, nRight, nBottom = wndMissionLine:GetAnchorOffsets()
-          wndMissionLine:SetAnchorOffsets(nLeft, nTop, nRight, 10 + math.max(knQuestItemHeight, nQuestTextHeight))
-        end
-      end
-
-      self.wndMapControlPanel:FindChild("MissionPaneContentList"):ArrangeChildrenVert(0)
-    end
-  end
-end
-
-  
-
-local zm_oldUpdatePublicEventList
-function ZoneMapHooker:HookUpdatePublicEventList()
-  if self.addon and zm_oldUpdatePublicEventList == nil then
-    zm_oldUpdatePublicEventList = self.addon.UpdatePublicEventList
-    self.addon.UpdatePublicEventList = function(self)
-      if self.wndMain == nil then
-        -- yes, it is possible for this to be nil here because we might not have gotten the OnLoad event yet
-        return
-      end
-
-      self.wndMapControlPanel:FindChild("PublicEventPaneContentList"):DestroyChildren()
-      
-      local tEventList = PublicEventsLib.GetActivePublicEventList()
-
-      local nCount = 0
-      for id, peCurrent in pairs(tEventList) do
-        if peCurrent:IsActive() then
-          local wndLine = Apollo.LoadForm(zoneMapFormFile, "PublicEventEntry", self.wndMapControlPanel:FindChild("PublicEventPaneContentList"), self)
-          local wndNumber = wndLine:FindChild("TextNumber")
-
-          -- number the queCurr
-          nCount = nCount + 1
-          wndNumber:SetText(String_GetWeaselString(Apollo.GetString("ZoneMap_TextNumber"), nCount))
-          wndNumber:SetTextColor(kcrQuestNumberColor)
-
-          wndLine:FindChild("TextNoItem"):Enable(false)
-          
-          local strTitle = string.format("<P Font=\"%s\" TextColor=\"%s\">%s</P>", kstrQuestFont, kstrQuestNameColor, peCurrent:GetName())
-          
-          wndLine:FindChild("TextNoItem"):SetAML(strTitle)
-          wndLine:FindChild("PublicEventBacker"):SetBGColor(CColor.new(1,1,1,0.5))
-          wndLine:SetData(peCurrent)
-
-          local nTextWidth, nTextHeight = wndLine:FindChild("TextNoItem"):SetHeightToContentHeight()
-          local nLeft, nTop, nRight, nBottom = wndLine:GetAnchorOffsets()
-          wndLine:SetAnchorOffsets(nLeft, nTop, nRight, 10 + math.max(knQuestItemHeight, nTextHeight))
-        end
-      end
-
-      self.wndMapControlPanel:FindChild("PublicEventPaneContentList"):ArrangeChildrenVert(0)
-    end
-  end
-end
-
-
-
-local zm_oldUpdateQuestList
-function ZoneMapHooker:HookUpdateQuestList()
-  if self.addon and zm_oldUpdateQuestList == nil then
-    zm_oldUpdateQuestList = self.addon.UpdateQuestList
-    self.addon.UpdateQuestList = function(self)
-    
-    
-    	if self.wndMain == nil then
-        -- yes, it is possible for this to be nil here because we might not have gotten the OnLoad event yet
-        return
-      end
-
-      if self.bIgnoreQuestStateChanged then
-        -- used to prevent errors when setting the active queCurr (auto-toggled)
-        return
-      end
-
-      self.tEpisodeList = QuestLib.GetTrackedEpisodes(self.bQuestTrackerByDistance)
-      self.wndMapControlPanel:FindChild("QuestPaneContentList"):DestroyChildren()
-
-      local nCount = 0
-      for idx, epiCurr in ipairs(self.tEpisodeList) do
-        for idx2, queCurr in ipairs(epiCurr:GetTrackedQuests(0, self.bQuestTrackerByDistance)) do
-          local wndQuestLine = Apollo.LoadForm(zoneMapFormFile, "QuestEntry", self.wndMapControlPanel:FindChild("QuestPaneContentList"), self)
-          local wndNumber = wndQuestLine:FindChild("TextNumber")
-
-          -- number the queCurr
-          nCount = nCount + 1
-          wndNumber:SetText(String_GetWeaselString(Apollo.GetString("ZoneMap_TextNumber"), nCount))
-          wndNumber:SetTextColor(kcrQuestNumberColor)
-
-          local eQuestState = queCurr:GetState() -- don't show completed or unknown quests
-          if eQuestState == Quest.QuestState_Achieved or eQuestState == Quest.QuestState_Botched then
-            wndQuestLine:FindChild("DifficultyMark"):SetBGColor(CColor.new(1.0, 1.0, 1.0, 1.0))
-            wndQuestLine:FindChild("DifficultyMark"):SetSprite("")
-            wndNumber:SetTextColor(CColor.new(47/255, 220/255, 2/255, 1.0))
-
-            --Fail state settings
-            if eQuestState == Quest.QuestState_Botched then
-              wndQuestLine:FindChild("DifficultyMark"):SetSprite("")
-              wndNumber:SetTextColor(CColor.new(1.0, 0, 0, 1.0))
-              wndNumber:SetText(Apollo.GetString("ZoneMap_FailMarker"))
-            end
-
-          else
-            wndQuestLine:FindChild("DifficultyMark"):SetSprite("ClientSprites:WhiteFill")
-
-            local eConLevel = queCurr:GetColoredDifficulty()
-            if eConLevel == Unit.CodeEnumLevelDifferentialAttribute.Grey then
-              wndQuestLine:FindChild("DifficultyMark"):SetBGColor(CColor.new(130/255, 130/255, 130/255, 1.0))
-            elseif eConLevel == Unit.CodeEnumLevelDifferentialAttribute.Green then
-              wndQuestLine:FindChild("DifficultyMark"):SetBGColor(CColor.new(130/255, 130/255, 130/255, 1.0))
-            elseif eConLevel == Unit.CodeEnumLevelDifferentialAttribute.Cyan then
-              wndQuestLine:FindChild("DifficultyMark"):SetBGColor(CColor.new(162/255, 255/255, 0/255, 1.0))
-            elseif eConLevel == Unit.CodeEnumLevelDifferentialAttribute.Blue then
-              wndQuestLine:FindChild("DifficultyMark"):SetBGColor(CColor.new(0/255, 150/255, 255/255, 1.0))
-            elseif eConLevel == Unit.CodeEnumLevelDifferentialAttribute.White then
-              wndQuestLine:FindChild("DifficultyMark"):SetBGColor(CColor.new(255/255, 255/255, 255/255, 1.0))
-            elseif eConLevel == Unit.CodeEnumLevelDifferentialAttribute.Yellow then
-              wndQuestLine:FindChild("DifficultyMark"):SetBGColor(CColor.new(255/255, 240/255, 0/255, 1.0))
-            elseif eConLevel == Unit.CodeEnumLevelDifferentialAttribute.Orange then
-              wndQuestLine:FindChild("DifficultyMark"):SetBGColor(CColor.new(255/255, 155/255, 0/255, 1.0))
-            elseif eConLevel == Unit.CodeEnumLevelDifferentialAttribute.Red then
-              wndQuestLine:FindChild("DifficultyMark"):SetBGColor(CColor.new(232/255, 5/255, 0/255, 1.0))
-            elseif eConLevel == Unit.CodeEnumLevelDifferentialAttribute.Magenta then
-              wndQuestLine:FindChild("DifficultyMark"):SetBGColor(CColor.new(175/255, 0/255, 232/255, 1.0))
-            else
-              --wndQuestLine:FindChild("DifficultyMark"):SetSprite("")
-            end
-          end
-
-          wndQuestLine:FindChild("TextNoItem"):Enable(false)
-          wndQuestLine:FindChild("TextNoItem"):SetAML(self:BuildQuestTitleString(queCurr))
-          wndQuestLine:FindChild("QuestBacker"):SetBGColor(CColor.new(1,1,1,0.5))
-          wndQuestLine:SetData(queCurr)
-
-          local nQuestTextWidth, nQuestTextHeight = wndQuestLine:FindChild("TextNoItem"):SetHeightToContentHeight()
-          local nLeft, nTop, nRight, nBottom = wndQuestLine:GetAnchorOffsets()
-          wndQuestLine:SetAnchorOffsets(nLeft, nTop, nRight, 10 + math.max(knQuestItemHeight, nQuestTextHeight))
-        end
-      end
-
-      self.wndMapControlPanel:FindChild("QuestPaneContentList"):ArrangeChildrenVert(0)
-
-    
-    
-    end
-  end
-end
-
-    
-local zm_oldFactoryProduce
-function ZoneMapHooker:HookFactoryProduce()
-  if self.addon and zm_oldFactoryProduce == nil then
-    zm_oldFactoryProduce = self.addon.FactoryProduce
-    self.addon.FactoryProduce = function(self, wndParent, strFormName, tObject)
-      local wndNew = wndParent:FindChildByUserData(tObject)
-      if not wndNew then
-        wndNew = Apollo.LoadForm(zoneMapFormFile, strFormName, wndParent, self)
-        wndNew:SetData(tObject)
-      end
-      return wndNew
-    end
-  end
-end
-
-local karCityDirectionsTypeToIcon =
-{
-	[GameLib.CityDirectionType.Mailbox] 		= "ClientSprites:Icon_Windows_UI_ReadMail",
-	[GameLib.CityDirectionType.Bank] 			= "ClientSprites:Icon_BuffDebuff_Money_Loot_Drop_Increase_Buff",
-	[GameLib.CityDirectionType.AuctionHouse] 	= "ClientSprites:Icon_Windows_UI_CRB_LevelUp_NewCapitalCity",
-	[GameLib.CityDirectionType.CommodityMarket] = "ClientSprites:Icon_Windows_UI_CRB_LevelUp_NewCapitalCity",
-	[GameLib.CityDirectionType.AbilityVendor] 	= "ClientSprites:Icon_Windows_UI_CRB_LevelUp_NewAbility",
-	[GameLib.CityDirectionType.Tradeskill] 		= "ClientSprites:Icon_Windows_UI_CRB_LevelUp_NewGearSlot",
-	[GameLib.CityDirectionType.General] 		= "ClientSprites:Icon_Windows_UI_CRB_LevelUp_NewGeneralFeature",
-	[GameLib.CityDirectionType.HousingNpc] 		= "ClientSprites:Icon_Windows_UI_CRB_LevelUp_NewCapitalCity",
-	[GameLib.CityDirectionType.Transport] 		= "ClientSprites:Icon_Windows_UI_CRB_LevelUp_NewZone",
-}
-local zm_oldOnCityDirectionsList
-function ZoneMapHooker:HookOnCityDirectionsList()
-  if self.addon and zm_oldOnCityDirectionsList == nil then
-    zm_oldOnCityDirectionsList = self.addon.OnCityDirectionsList
-    self.addon.OnCityDirectionsList = function(self, tDirections)
-    
-    	if self.wndCityDirections ~= nil and self.wndCityDirections:IsValid() then
-        self.wndCityDirections:Destroy()
-      end
-
-      self.wndCityDirections = Apollo.LoadForm(zoneMapFormFile, "CityDirections", nil, self)
-			self.wndCityDirections:ToFront()
-
-			local wndCityDirectionsList = self.wndCityDirections:FindChild("CityDirectionsList")
-			table.sort(tDirections, function(a, b) return a.strName < b.strName end)
-			for idx, tCurrDirection in pairs(tDirections) do
-				local wndCurr = Apollo.LoadForm("ZoneMapForms.xml", "CityDirectionsBtn", wndCityDirectionsList, self)
-				wndCurr:FindChild("CityDirectionsBtnIcon"):SetSprite(karCityDirectionsTypeToIcon[tCurrDirection.eType] or "Icon_ArchetypeUI_CRB_DefensiveHealer")
-				wndCurr:FindChild("CityDirectionsBtnText"):SetText(tCurrDirection.strName)
-				wndCurr:SetData(tCurrDirection.idDestination)
-			end
-			self.wndCityDirections:FindChild("CityDirectionsList"):ArrangeChildrenVert(0)
-    
-    
-    end
-  end
-end

@@ -1,11 +1,65 @@
 local N = Apollo.GetAddon("NavMate")
 local L = N.L
-local DaiGUI  = Apollo.GetPackage("DaiGUI-1.0").tPackage
-local GLocale = Apollo.GetPackage("GeminiLocale-1.0").tPackage
+local GUILib  = Apollo.GetPackage("Gemini:GUI-1.0").tPackage
+local GLocale = Apollo.GetPackage("Gemini:Locale-1.0").tPackage
 
 
 local ktNodeIcons = {
   "MiniMapObject",
+	"IconSprites:Icon_MapNode_Map_GroupMember",
+	"IconSprites:Icon_MapNode_Map_Node_Mining",
+	"IconSprites:Icon_MapNode_Map_Node_Relic",
+	"IconSprites:Icon_MapNode_Map_Node_Tree",
+	"IconSprites:Icon_MapNode_Map_Node_Plant",
+	"IconSprites:Icon_MapNode_Map_Node_Fishing",
+	
+  "CRB_MinimapSprites:sprMM_Group",
+  "CRB_MinimapSprites:sprMM_SmallIconSettler",
+  "ClientSprites:MiniMapMarkerTiny",
+  "IconSprites:Icon_MapNode_Map_AuctionHouse",
+  "IconSprites:Icon_MapNode_Map_Bank",
+  "IconSprites:Icon_MapNode_Map_Chat",
+  "IconSprites:Icon_MapNode_Map_CityDirections",
+  "IconSprites:Icon_MapNode_Map_CommoditiesExchange",
+  "IconSprites:Icon_MapNode_Map_DyeSpecialist",
+  "IconSprites:Icon_MapNode_Map_Explorer",
+  "IconSprites:Icon_MapNode_Map_Explorer_Accepted",
+  "IconSprites:Icon_MapNode_Map_Friend",
+  "IconSprites:Icon_MapNode_Map_Gate",
+  "IconSprites:Icon_MapNode_Map_GroupMember",
+  "IconSprites:Icon_MapNode_Map_Mailbox",
+  "IconSprites:Icon_MapNode_Map_Portal",
+  "IconSprites:Icon_MapNode_Map_Quest",
+  "IconSprites:Icon_MapNode_Map_Quest_Disabled",
+  "IconSprites:Icon_MapNode_Map_Rival",
+  "IconSprites:Icon_MapNode_Map_Scientist",
+  "IconSprites:Icon_MapNode_Map_Scientist_Accepted",
+  "IconSprites:Icon_MapNode_Map_Settler",
+  "IconSprites:Icon_MapNode_Map_Settler_Accepted",
+  "IconSprites:Icon_MapNode_Map_Soldier",
+  "IconSprites:Icon_MapNode_Map_Soldier_Accepted",
+  "IconSprites:Icon_MapNode_Map_Taxi",
+  "IconSprites:Icon_MapNode_Map_Taxi_Undiscovered",
+  "IconSprites:Icon_MapNode_Map_Tradeskill",
+  "IconSprites:Icon_MapNode_Map_Trainer",
+  "IconSprites:Icon_MapNode_Map_Vendor",
+  "IconSprites:Icon_MapNode_Map_Vendor_Armor",
+  "IconSprites:Icon_MapNode_Map_Vendor_Consumable",
+  "IconSprites:Icon_MapNode_Map_Vendor_ElderGem",
+  "IconSprites:Icon_MapNode_Map_Vendor_Flight",
+  "IconSprites:Icon_MapNode_Map_Vendor_Housing",
+  "IconSprites:Icon_MapNode_Map_Vendor_Mount",
+  "IconSprites:Icon_MapNode_Map_Vendor_Prestige_Arena",
+  "IconSprites:Icon_MapNode_Map_Vendor_Prestige_Battlegrounds",
+  "IconSprites:Icon_MapNode_Map_Vendor_Prestige_Warplot",
+  "IconSprites:Icon_MapNode_Map_Vendor_Renown",
+  "IconSprites:Icon_MapNode_Map_Vendor_Reputation",
+  "IconSprites:Icon_MapNode_Map_Vendor_ResourceConversion",
+  "IconSprites:Icon_MapNode_Map_Vendor_Tradeskill",
+  "IconSprites:Icon_MapNode_Map_Vendor_Weapon",
+  "sprMM_QuestCompleteOngoing",
+  "sprMM_QuestCompleteUntracked",
+	
   "NavMate_sprMM_Group",
   "NavMate_sprMM_Settler",
   "NavMate_sprMM_Scientist",
@@ -120,10 +174,6 @@ local ktNodeTiers = {
 
 
 
-local function OnClockLocalServerChanged( _, _, wndControl )
-	N:GetModule("Clock").config.isLocal = (wndControl:GetParent():GetRadioSel("ClockLocalServer") == 1)
-end
-
 local function UpdateGroupNodes()
   for strModuleName, oModule in N:IterateModules() do
     if type(oModule.DrawGroupMembers) == "function" then
@@ -151,7 +201,7 @@ local function ArrangeOptionsFrames(_, wndHandler, wndControl)
   
   -- Required to sort the children as GetChildren() sorts them by ID.
   -- IDs are not guaranteed to be in the same order as the Children 
-  -- table when DaiGUI:Create():GetInstance is called.
+  -- table when GUILib:Create():GetInstance is called.
   table.sort(tControls, function(a,b) 
       if a:GetName() == b:GetName() then
         return a:GetId() < b:GetId()
@@ -261,7 +311,7 @@ local function CreateIconPicker(wndAnchor, tIcons, nIconSize, strPrevSelected, f
     end
   end
   
-  wndIconPicker = DaiGUI:Create(tWndDef):GetInstance(nil,wndAnchor)
+  wndIconPicker = GUILib:Create(tWndDef):GetInstance(nil,wndAnchor)
 end
 
 
@@ -349,29 +399,29 @@ local function ShowPerNodeCustomization(strNodeType)
       Name = "NodeRow." .. k,
       AnchorPoints = "HFILL", AnchorOffsets = {0,0,0,36},
       Pixies = {
-        { Text = k:gsub("Node$", "") .. " (T" .. ktNodeTiers[k] ..")", Font = "CRB_InterfaceSmall", AnchorPoints = "VFILL", AnchorOffsets = {45, 0, 200, 0}, DT_VCENTER = true },          
+        { Text = k:gsub("Node$", "") .. " (T" .. ktNodeTiers[k] ..")", Font = "CRB_InterfaceSmall", AnchorPoints = "VFILL", AnchorOffsets = {100, 0, 295, 0}, DT_VCENTER = true },          
       },
       Children = {
-        { -- Show
-          WidgetType    = "NavMateCheckBox",
-          Name          = "ShowCheckBox",
-          AnchorPoints  = { 0,0,0,1 }, AnchorOffsets = { 10,0,40,0 },
-          Events = {
-            ButtonCheck   = function(_, wndHandler, wndControl)
-              if wndHandler ~= wndControl then return end
-              N.db.modules.map[strNodeType].perNode[k].show = wndControl:IsChecked()
-              N:UpdateResourceNodes(true)
-            end,
-            ButtonUncheck = "Event::ButtonCheck",
-            WindowLoad    = function(_, wndHandler, wndControl)
-              if wndHandler ~= wndControl then return end
-              wndControl:SetCheck(N.db.modules.map[strNodeType].perNode[k].show)
-            end,
-          },
-        },
+--        { -- Show
+--          WidgetType    = "NavMateCheckBox",
+--          Name          = "ShowCheckBox",
+--          AnchorPoints  = { 0,0,0,1 }, AnchorOffsets = { 10,0,40,0 },
+--          Events = {
+--            ButtonCheck   = function(_, wndHandler, wndControl)
+--              if wndHandler ~= wndControl then return end
+--              N.db.modules.map[strNodeType].perNode[k].show = wndControl:IsChecked()
+--              N:UpdateResourceNodes(true)
+--            end,
+--            ButtonUncheck = "Event::ButtonCheck",
+--            WindowLoad    = function(_, wndHandler, wndControl)
+--              if wndHandler ~= wndControl then return end
+--              wndControl:SetCheck(N.db.modules.map[strNodeType].perNode[k].show)
+--            end,
+--          },
+--        },
         { -- IconFrame
           Name = "IconFrame",
-          AnchorPoints  = { 0,0,0,1 }, AnchorOffsets = { 210,0,250,0 },
+          AnchorPoints  = { 0,0,0,1 }, AnchorOffsets = { 10,0,50,0 },
           
           Children = {
 						{
@@ -427,7 +477,7 @@ local function ShowPerNodeCustomization(strNodeType)
       
         { -- ColorFrame
           Name = "ColorFrame",
-          AnchorPoints  = { 0,0,0,1 }, AnchorOffsets = { 255,0,295,0 },
+          AnchorPoints  = { 0,0,0,1 }, AnchorOffsets = { 55,0,95,0 },
           
           Children = {
 						{
@@ -485,14 +535,14 @@ local function ShowPerNodeCustomization(strNodeType)
     }
     tNodes[#tNodes+1] = tRowDef
   end
-  wndPerNode = DaiGUI:Create(tWndDef):GetInstance()
+  wndPerNode = GUILib:Create(tWndDef):GetInstance()
 end
 
 
 
 
-DaiGUI:RegisterWidgetType("NavMateCheckBox", function()
-  local ctrl = DaiGUI.ControlBase:new()
+GUILib:RegisterWidgetType("NavMateCheckBox", function()
+  local ctrl = GUILib.ControlBase:new()
   ctrl:SetOptions{
     Class            = "Button",
     Name             = "NavMateCheckBox",
@@ -508,8 +558,8 @@ DaiGUI:RegisterWidgetType("NavMateCheckBox", function()
   return ctrl
 end, 1)
 
-DaiGUI:RegisterWidgetType("NavMateRadioButton", function()
-  local ctrl = DaiGUI.ControlBase:new()
+GUILib:RegisterWidgetType("NavMateRadioButton", function()
+  local ctrl = GUILib.ControlBase:new()
   ctrl:SetOptions{
     Class            = "Button",
     Name             = "NavMateRadioButton",
@@ -524,8 +574,8 @@ DaiGUI:RegisterWidgetType("NavMateRadioButton", function()
   }
   return ctrl
 end, 1)
-DaiGUI:RegisterWidgetType("NavMateSubOptionFrame", function()
-  local ctrl = DaiGUI.ControlBase:new()
+GUILib:RegisterWidgetType("NavMateSubOptionFrame", function()
+  local ctrl = GUILib.ControlBase:new()
   ctrl:SetOptions{
     Class            = "Window",
     RelativeToClient = true,
@@ -535,8 +585,8 @@ DaiGUI:RegisterWidgetType("NavMateSubOptionFrame", function()
   ctrl:AddPixie{ AnchorPoints = {0,1,1,1}, AnchorOffsets = {0,-15,0,0}, Sprite = "CRB_Tooltips:sprTooltip_HorzDividerDiagonal" }
   return ctrl
 end, 1)
-DaiGUI:RegisterWidgetType("NavMateMainOptionFrame", function()
-  local ctrl = DaiGUI.ControlBase:new()
+GUILib:RegisterWidgetType("NavMateMainOptionFrame", function()
+  local ctrl = GUILib.ControlBase:new()
   ctrl:SetOptions{
     Class            = "Window",
     RelativeToClient = true,
@@ -605,12 +655,10 @@ local function CreateMainWindowDef()
     },
     Events = {
       WindowLoad = function()
-        N:GetModule("Clock").wnd:SetStyle("Moveable", true)
         N:GetModule("Coords").wnd:SetStyle("Moveable", true)
       end,
       WindowClosed = function(_, wndHandler, wndControl)
         if wndHandler ~= wndControl then return end
-        N:GetModule("Clock").wnd:SetStyle("Moveable", false)
         N:GetModule("Coords").wnd:SetStyle("Moveable", false)
         wndControl:Destroy()
       end,
@@ -624,138 +672,6 @@ local function CreateGeneralTab()
   return {
     WidgetType = "NavMateMainOptionFrame",
     Children = {
-      { -- Clock
-        Name = "SubOptions.1",
-        NewControlDepth = 1,
-        WidgetType = "NavMateSubOptionFrame",
-        Pixies = {
-          { Text = L["Clock"], AnchorPoints = { 0,0,1,0 }, AnchorOffsets = { 0,0,0,20}, DT_CENTER = true, DT_VCENTER = true, TextColor = "UI_TextHoloTitle",  Font = "CRB_InterfaceLarge" },
-        },        
-        Children = {
-          {
-            AnchorPoints = "FILL", AnchorOffsets = {23,39,-23,99},
-            Events = { WindowLoad = ArrangeOptions, },
-            Children = {
-              { -- ClockEnableBtn
-                WidgetType    = "NavMateCheckBox",
-                Name          = "ClockEnableBtn",
-                Text          = "  " .. L["Enable"],
-                AnchorPoints  = {0,0,0.5,0}, AnchorOffsets = {0,0,0,30},
-                Events = {
-                  ButtonCheck = function(_, wndHandler, wndControl)
-                    if wndHandler ~= wndControl then return end
-                    N:GetModule("Clock").config.enable = wndControl:IsChecked()
-                  end,
-                  ButtonUncheck = "Event::ButtonCheck",
-                  WindowLoad = function(_, wndHandler, wndControl)
-                    if wndHandler ~= wndControl then return end
-                    wndControl:SetCheck(N:GetModule("Clock").config.enable)
-                  end,
-                },
-              },
-              { -- Clock24HourBtn
-                WidgetType    = "NavMateCheckBox",
-                Name          = "Clock24HourBtn",
-                Text          = "  " .. L["Options_24HourClock"],
-                AnchorPoints  = {0,0,0.5,0}, AnchorOffsets = {0,0,0,30},
-                Events = {
-                  ButtonCheck = function(_, wndHandler, wndControl)
-                    if wndHandler ~= wndControl then return end
-                    N:GetModule("Clock").config.isMilitary = wndControl:IsChecked()
-                  end,
-                  ButtonUncheck = "Event::ButtonCheck",
-                  WindowLoad = function(_, wndHandler, wndControl)
-                    if wndHandler ~= wndControl then return end
-                    wndControl:SetCheck(N:GetModule("Clock").config.isMilitary)
-                  end,
-                },
-              },
-              { -- DisplayTimeRadioGroup
-                AnchorPoints = "HFILL", AnchorOffsets = {0,0,0,30},
-                Pixies = {
-                  {
-                    AnchorPoints = {0,0,0.33,1}, AnchorOffsets = {5,0,1,0},
-                    DT_VCENTER = true,
-                    Text = L["Display Time"],
-                    Font             = "CRB_InterfaceMedium",
-                    TextColor        = "UI_WindowTextDefault",
-                  },
-                },
-                Children = {
-                  { -- ClockLocalTimeBtn
-                    WidgetType    = "NavMateRadioButton",
-                    Name          = "ClockLocalTimeBtn",
-                    RadioGroup    = "ClockLocalServer",
-                    Text          = "  " .. L["Local"],
-                    AnchorPoints  = {0.33,0,0.66,1}, AnchorOffsets = {0,0,0,0},
-                    Events = {
-                      ButtonCheck   = OnClockLocalServerChanged,
-                      ButtonUncheck = OnClockLocalServerChanged,
-                    },
-                  },
-                  { -- ClockServerTimeBtn
-                    WidgetType    = "NavMateRadioButton",
-                    Name          = "ClockServerTimeBtn",
-                    RadioGroup    = "ClockLocalServer",
-                    Text          = "  " .. L["Server"],
-                    AnchorPoints  = {0.66,0,1,1}, AnchorOffsets = {0,0,0,0},
-                    Events = {
-                      ButtonCheck   = OnClockLocalServerChanged,
-                      ButtonUncheck = OnClockLocalServerChanged,
-                    },
-                  },
-                },
-                Events = {
-                  WindowLoad = function(_, wndHandler, wndControl)
-                    if wndHandler ~= wndControl then return end
-                    wndControl:SetRadioSel("ClockLocalServer", N:GetModule("Clock").config.isLocal and 1 or 2)
-                  end
-                },
-              },
-              
-              FillerCell,
-              FillerCell, 
-              FillerCell, 
-              { -- ClockAnchorToMiniMapBtn
-                WidgetType    = "NavMateCheckBox",
-                Text          = "  " .. L["Dock to MiniMap"],
-                AnchorPoints  = {0,0,0.5,0}, AnchorOffsets = {0,0,0,30},
-                Events = {
-                  ButtonCheck = function(_, wndHandler, wndControl)
-                    if wndHandler ~= wndControl then return end
-                    N:GetModule("Clock").config.isDocked = wndControl:IsChecked()
-                    N:GetModule("Clock"):SetupWindow()
-                    N:GetModule("Clock").wnd:SetStyle("Moveable", true)
-                  end,
-                  ButtonUncheck = "Event::ButtonCheck",
-                  WindowLoad = function(_, wndHandler, wndControl)
-                    if wndHandler ~= wndControl then return end
-                    wndControl:SetCheck(N:GetModule("Clock").config.isDocked)
-                  end,
-                },
-              },
-							{
-								AnchorPoints = {0,0,0.5,0}, AnchorOffsets = {0,0,0,30},
-								Children = {
-									{ -- ResetPositionBtn
-										WidgetType = "PushButton",
-										Base = "BK3:btnHolo_Blue_Med",
-										Text = L["Reset Position"],
-										TextTheme = "UI_BtnTextBlue",
-										AnchorPoints = "FILL",
-										AnchorOffsets = { -10, -16, 10, 16 },
-										NoClip = true,
-										Events = {
-											ButtonSignal = function() N:GetModule("Clock"):ResetPosition() end,
-										},
-									},
-								},
-							},
-              
-            },
-          },
-        },
-      }, -- End of Clock Settings
       { -- Coords
         NewControlDepth = 2,
         Name = "SubOptions.2",
@@ -784,28 +700,29 @@ local function CreateGeneralTab()
                   end,
                 },
               },
-              FillerCell,
-              FillerCell, 
-              FillerCell, 
+--              FillerCell,
+--              FillerCell, 
+--              FillerCell, 
               
-              { -- CoordsAnchorToMiniMapBtn
-                WidgetType    = "NavMateCheckBox",
-                Text          = "  " .. L["Dock to MiniMap"],
-                AnchorPoints  = {0,0,0.5,0}, AnchorOffsets = {0,0,0,30},
-                Events = {
-                  ButtonCheck = function(_, wndHandler, wndControl)
-                    if wndHandler ~= wndControl then return end
-                    N:GetModule("Coords").config.isDocked = wndControl:IsChecked()
-                    N:GetModule("Coords"):SetupWindow()
-                    N:GetModule("Coords").wnd:SetStyle("Moveable", true)
-                  end,
-                  ButtonUncheck = "Event::ButtonCheck",
-                  WindowLoad = function(_, wndHandler, wndControl)
-                    if wndHandler ~= wndControl then return end
-                    wndControl:SetCheck(N:GetModule("Coords").config.isDocked)
-                  end,
-                },
-              },
+--              { -- CoordsAnchorToMiniMapBtn
+--                WidgetType    = "NavMateCheckBox",
+--                Text          = "  " .. L["Dock to MiniMap"],
+--                AnchorPoints  = {0,0,0.5,0}, AnchorOffsets = {0,0,0,30},
+--                Events = {
+--                  ButtonCheck = function(_, wndHandler, wndControl)
+--                    if wndHandler ~= wndControl then return end
+--                    N:GetModule("Coords").config.isDocked = wndControl:IsChecked()
+--                    N:GetModule("Coords"):SetupWindow()
+--                    N:GetModule("Coords").wnd:SetStyle("Moveable", true)
+--                  end,
+--                  ButtonUncheck = "Event::ButtonCheck",
+--                  WindowLoad = function(_, wndHandler, wndControl)
+--                    if wndHandler ~= wndControl then return end
+--                    wndControl:SetCheck(N:GetModule("Coords").config.isDocked)
+--										wndControl:Enable(false)
+--                  end,
+--                },
+--              },
 							{
 								AnchorPoints = {0,0,0.5,0}, AnchorOffsets = {0,0,0,30},
 								Children = {
@@ -1257,27 +1174,9 @@ local function CreateTradeSkillNodesTab()
             AnchorPoints = "FILL", AnchorOffsets = {23,39,-23,99},
             Events = { WindowLoad = ArrangeOptions, },
             Children = {
-              { -- Enable
-                WidgetType    = "NavMateCheckBox",
-                AnchorPoints  = {0,0,0.33,0}, AnchorOffsets = { 0,0,0,30 },
-                Text          = "  " .. L["Show Nodes"],
-                Events = {
-                  ButtonCheck   = function(_, wndHandler, wndControl) 
-                    if wndHandler ~= wndControl then return end
-                    N.db.modules.map[strTradeSkill].show = wndControl:IsChecked() 
-                    N:UpdateResourceNodes(true)
-                  end,
-                  ButtonUncheck = "Event::ButtonCheck",
-                  WindowLoad    = function(_, wndHandler, wndControl)
-                    if wndHandler ~= wndControl then return end
-                    wndControl:SetCheck(N.db.modules.map[strTradeSkill].show)
-                    N:UpdateResourceNodes(true)
-                  end,
-                },
-              },
               { -- IconFrame
                 Name = "IconFrame",
-                AnchorPoints  = {0,0,0.33,0}, AnchorOffsets = { 0,0,0,30 },
+                AnchorPoints  = {0,0,0.5,0}, AnchorOffsets = { 0,0,0,30 },
                 
                 Pixies = {
                   {
@@ -1344,7 +1243,7 @@ local function CreateTradeSkillNodesTab()
             
               { -- ColorFrame
                 Name = "ColorFrame",
-                AnchorPoints  = {0,0,0.33,0}, AnchorOffsets = { 0,0,0,33 },
+                AnchorPoints  = {0,0,0.5,0}, AnchorOffsets = { 0,0,0,33 },
                 
                 Pixies = {
                   {
@@ -1408,14 +1307,13 @@ local function CreateTradeSkillNodesTab()
 									},
                 },
               },
-              
-              FillerCell,
-              FillerCell,
-              FillerCell,
             
+              FillerCell,
+              FillerCell,
+						
               { -- Icon
                 WidgetType    = "NavMateCheckBox",
-                AnchorPoints  = {0,0,0.33,0}, AnchorOffsets = { 0,0,0,30 },
+                AnchorPoints  = {0,0,0.5,0}, AnchorOffsets = { 0,0,0,30 },
                 Text          = "  " .. L["Use Per Node"],
                 Events = {
                   ButtonCheck   = function(_, _, wndControl) 
@@ -1431,7 +1329,7 @@ local function CreateTradeSkillNodesTab()
                 },
               },
 							{
-								AnchorPoints = { 0, 0, 0.33, 0 }, AnchorOffsets = {0,0,0,30},
+								AnchorPoints = { 0, 0, 0.5, 0 }, AnchorOffsets = {0,0,0,30},
 								Children = {
 									{
 										WidgetType = "PushButton",
@@ -1452,13 +1350,10 @@ local function CreateTradeSkillNodesTab()
 												if wndHandler ~= wndControl then return end
 												wndControl:Enable(N.db.modules.map[strTradeSkill].usePerNode)
 											end
+										},
 									},
 								},
-							},
-						
-                
               },
-              FillerCell,
 
             },
           },
@@ -1473,7 +1368,7 @@ end
 
 local function CreateMapTab()
   local tMarkers = {}
-  for _, strMarker in ipairs({"Mailbox", "Bank", "Datacube", "Path", "SettlerMinfrastructure"}) do
+  for _, strMarker in ipairs({"Datacube", "Path", "SettlerMinfrastructure"}) do
     local strText = L["MiniMapMarker_" .. strMarker]
       
     table.insert(tMarkers, 
@@ -1802,7 +1697,7 @@ local function OnTabButtonCheck(_, _, wndControl)
   if type(fn) == "function" then 
     local frameContainer = wndControl:GetParent():GetParent():FindChild("FrameContainer")
     frameContainer:DestroyChildren()
-    DaiGUI:Create(fn):GetInstance(nil, frameContainer)
+    GUILib:Create(fn):GetInstance(nil, frameContainer)
   end
 end
 
@@ -1810,7 +1705,7 @@ local nTabCount = 0
 local function AddTab(wndOptions, strTabName, fnCreateTabContent)
   nTabCount = nTabCount + 1
   local wndTabContainer = wndOptions:FindChild("TabContainer")
-  local tBtn = DaiGUI:Create({
+  local tBtn = GUILib:Create({
     Name                      = "TabButton" .. nTabCount,
     LuaData                   = fnCreateTabContent,
     Text                      = strTabName,
@@ -1859,7 +1754,7 @@ function N:ToggleOptionsWindow()
     self:OnOptionsWindowClose()
   else
     if self.wndOptions == nil or not self.wndOptions:IsValid() then
-      self.wndOptions = DaiGUI:Create(CreateMainWindowDef()):GetInstance()
+      self.wndOptions = GUILib:Create(CreateMainWindowDef()):GetInstance()
       nTabCount = 0
     end
     

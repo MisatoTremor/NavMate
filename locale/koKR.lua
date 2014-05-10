@@ -1,4 +1,4 @@
-local L = Apollo.GetPackage("GeminiLocale-1.0").tPackage:NewLocale("NavMate", "koKR")
+local L = Apollo.GetPackage("Gemini:Locale-1.0").tPackage:NewLocale("NavMate", "koKR")
 if not L then return end
 
 --[[ Proper Translations ]]--
